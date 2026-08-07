@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+title: >-
+  Code and data for "Soil amplification and earthquake-induced collapse
+  potential in Istanbul: A physics-guided machine-learning framework with
+  physically interpretable features for Marmara basin effects and structural
+  vulnerability"
+message: If you use this software or data, please cite the accompanying article.
+type: software
+authors:
+  - given-names: Polina
+    family-names: Lemenkova
+    # orcid: "https://orcid.org/0000-0002-XXXX-XXXX"   <- add yours
+  - given-names: Abdullah Can
+    family-names: Zülfikar
+    affiliation: >-
+      Disaster Management Institute, Istanbul Technical University,
+      Istanbul, Türkiye
+    # orcid: "https://orcid.org/..."                    <- add if available
+keywords:
+  - seismic site response
+  - soil amplification
+  - machine learning
+  - Generic Mapping Tools
+  - Sea of Marmara
+  - North Anatolian Fault
+license: MIT
+preferred-citation:
+  type: article
+  title: >-
+    Soil amplification and earthquake-induced collapse potential in Istanbul:
+    A physics-guided machine-learning framework with physically interpretable
+    features for Marmara basin effects and structural vulnerability
+  authors:
+    - given-names: Polina
+      family-names: Lemenkova
+    - given-names: Abdullah Can
+      family-names: Zülfikar
+  journal: "Geohazards & Remediation"
+  publisher:
+    name: Higher Education Press
+  issn: "2097-5627"
+  # year:   <- add on acceptance
+  # volume: <- add on acceptance
+  # doi:    <- add on acceptance
