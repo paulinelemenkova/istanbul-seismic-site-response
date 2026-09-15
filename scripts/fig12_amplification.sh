@@ -1,55 +1,5 @@
 #!/bin/sh
-# ============================================================================
-# fig12_amplification — equivalent-linear site-amplification field over the
-#                       Istanbul–Marmara area (GMT 6.x, modern mode)
-# ----------------------------------------------------------------------------
-# WHAT CHANGED relative to the previous version of this script, and why
-# ----------------------------------------------------------------------------
-# The previous script did NOT plot site amplification. It built the field from
-# topography alone:
-#
-#     s   = softness index from slope          (flat -> 1, steep -> 0)
-#     sed = clip((50 - elevation)/50, 0, 1)    ("sediment-thickness proxy")
-#     F   = 1 + 0.95*(0.6*s + 0.4*sed),  land-mean RESCALED to 1.34,
-#           clipped to [1.0, 1.85]
-#
-# That is an ad-hoc linear blend of two topographic indices, not an
-# amplification model, and rescaling the mean onto the manuscript's quoted 1.34
-# made the reported statistic circular. It also produced a drainage-network
-# texture rather than a basin pattern, so the Results claim that the elevated
-# interior lies below 1.2 was not supported by the map.
-#
-# This version computes F from the stated physics and from real input grids:
-#
-#     F = (V_ref / Vs30)^m           Borcherdt (1994) site-amplification form,
-#                                    V_ref = 760 m/s (engineering bedrock, the
-#                                    NEHRP B/C boundary used by the Istanbul
-#                                    microzonation)
-#
-# with Vs30 read from the USGS global hybrid Vs30 mosaic (Heath et al. 2020) —
-# the grid named in Table 2 of the manuscript — cut to this window. No values
-# are invented, no mean is forced, and no arbitrary clip is applied: the script
-# prints the statistics that actually result so they can be compared with the
-# text rather than imposed on it.
-#
-# REQUIRED INPUT
-#   vs30.nc       Vs30 (m/s) on this window. From the USGS mosaic:
-#                     gmt grdcut global_vs30.grd -R$R -Gvs30.nc
-#   mmf_trace.txt Main Marmara Fault trace, "lon lat" per line. Export the same
-#                 geometry used in Figure 10 rather than re-typing it: the old
-#                 inline nine-vertex polyline was a hand sketch and did not
-#                 match the database traces drawn elsewhere in the paper.
-#
-# OPTIONAL INPUT
-#   topo.nc       relief for the hillshade. If absent the map is drawn flat;
-#                 the coastline no longer depends on it (GSHHG is used).
-#
-# The script FAILS if a required grid is missing. It will not substitute a
-# synthetic field, because a figure that silently differs from the manuscript
-# is worse than no figure.
-#
-# Outputs: fig12_amplification.pdf + fig12_amplification.png
-# ============================================================================
+
 set -e
 
 R=27.8/30.0/40.55/41.3          # Istanbul–Marmara window
