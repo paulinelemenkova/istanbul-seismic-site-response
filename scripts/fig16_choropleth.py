@@ -2,37 +2,6 @@
 # ============================================================================
 # fig16_collapsemap — İBB scenario heavy-damage ratio by neighbourhood
 #                     (959 mahalle), Istanbul metropolitan area
-# ----------------------------------------------------------------------------
-# WHAT THIS FIGURE NOW SHOWS, AND WHY IT CHANGED
-#
-# The previous version drew a raster of "predicted collapse probability" from a
-# seeded synthetic construction: neither the amplification field nor the score
-# came from a model, and the colour bar used the word "probability", which
-# Section 2.2 of the manuscript explicitly reserves for a calibrated quantity
-# and forbids for this one. The trained classifier is not recoverable, so no
-# surrogate collapse-screening score exists to be mapped.
-#
-# This version maps a quantity that does exist as data: the ratio of heavily or
-# very heavily damaged buildings to total stock, per neighbourhood, from the
-# İBB night-time M_w 7.5 Main Marmara Fault scenario. It is an independent
-# modelled estimate produced by a different group, not the output of the
-# classifier of this paper, and it is labelled as such. The manuscript already
-# reports these data in the scenario-comparison section and its table; this map
-# is their spatial rendering.
-#
-# INPUT (all supplied; nothing synthetic)
-#   mahalle_inventory_scenario_joined.csv  959 rows, inventory + scenario damage
-#   mahalle_with_coords.csv                959 neighbourhood centroids
-#   mahalle_fixed.geojson                  968 administrative polygons (OSM)
-#   ne_10m_land.{shp,shx,dbf}              coastline, Natural Earth 1:10 m
-#
-# JOIN. The GeoJSON carries Nominatim properties with no UAVT code, and the CSV
-# neighbourhood names are mojibake (İ->Ý, ş->þ), so name matching recovers only
-# 56% of records. The join is therefore spatial: each centroid is located in the
-# polygon containing it. Records that cannot be placed are drawn as no-data
-# rather than omitted or interpolated.
-#
-# Outputs: fig16_collapsemap.pdf + fig16_collapsemap.png
 # ============================================================================
 import os, json
 import numpy as np
