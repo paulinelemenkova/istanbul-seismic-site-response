@@ -5,11 +5,6 @@ the architecture of the resist/collapse surrogate, from the six physically
 interpretable input features through the tree ensemble and its aggregation to
 the binary resist/collapse decision used to screen the building stock.
 
-The figure is a schematic and carries no axes, so the tick, grid and legend
-rules do not apply; the typography, sizing, anti-overlap and export rules do.
-Note that S_a(T_0) appears only as an input: the model has a single output, the
-binary decision of the drift limit-state rule.
-
 Font: apt-get install fonts-urw-base35    (Debian/Ubuntu)
       brew install --cask font-urw-base35 (macOS)
 
