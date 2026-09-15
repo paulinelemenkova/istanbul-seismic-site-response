@@ -5,19 +5,6 @@ the architecture of the resist/collapse surrogate, from the six physically
 interpretable input features through the tree ensemble and its aggregation to
 the binary resist/collapse decision used to screen the building stock.
 
-House style (scientific-plotting skill):
-  * Nimbus Sans everywhere; DejaVu Sans is forbidden, and the script raises if
-    matplotlib would fall back to it.
-  * Built at the final double-column width (17.5 cm), not drawn large and shrunk.
-  * Exactly three text sizes, all inside the mandatory 8-12 pt band:
-    11 pt bold (in-figure title), 9 pt bold (column headers, block labels),
-    8 pt (feature descriptors, tree labels, credit note).
-  * Rule 1 (nothing readable may overlap anything else) is *verified, not
-    assumed*: the feature labels are measured in display space and asserted to
-    sit inside their boxes, and the ensemble panel is checked against the
-    aggregation block.
-  * Exported as vector PDF plus 600 dpi PNG, named figNN_*.
-
 The figure is a schematic and carries no axes, so the tick, grid and legend
 rules do not apply; the typography, sizing, anti-overlap and export rules do.
 Note that S_a(T_0) appears only as an input: the model has a single output, the
