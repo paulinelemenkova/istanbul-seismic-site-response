@@ -1,46 +1,5 @@
 #!/usr/bin/env python3
 # ============================================================================
-# fig17_bivariate — modelled heavy-damage ratio AGAINST pre-1980 building share
-#                   by neighbourhood (959 mahalle), Istanbul
-# ----------------------------------------------------------------------------
-# WHY THIS FIGURE
-#
-# The manuscript states that construction age alone explains little of the
-# modelled damage (r = 0.38 across the 959 neighbourhoods) and that Beylikdüzü
-# and Büyükçekmece reach high damage ratios with almost no pre-code stock. Those
-# are claims about the JOINT distribution of two variables, which no single-
-# variable choropleth can show. In the top damage DECILE the split is stark:
-# 34 neighbourhoods have mostly pre-1980 stock (>70%), 32 of them in Fatih,
-# while 22 have almost none (<30%) - Küçükçekmece 7, Beylikdüzü 3, Tuzla 3,
-# Bahçelievler 2. An old-stock historic core and a new-stock western periphery
-# reach comparable damage ratios by different routes. The map classifies by
-# TERCILES rather than deciles so that every neighbourhood is placed; in the top
-# damage tercile the corresponding counts are 43 and 177.
-#
-# CLASSIFICATION. Both variables are cut at their terciles, giving a 3x3 scheme.
-# Breaks: damage ratio 0.0133 / 0.0429; pre-1980 share 0.045 / 0.340.
-#
-# COLOUR. nipy_spectral, as requested. cpt_tools.assess reports it "unsuitable"
-# for encoding a continuous variable - lightness runs L* 0-93 with six
-# reversals - but that objection applies to a continuous ramp. Here it is used
-# CATEGORICALLY: nine well-separated samples for nine discrete classes, decoded
-# through the 3x3 key rather than by reading a gradient. The residual cost is
-# that a 1-D ramp cannot make the two axes separately readable, so the key does
-# all the decoding work; BIVAR=classic switches to a conventional two-dimensional
-# palette in which hue carries damage and saturation carries age.
-#
-# INPUT: mahalle_inventory_scenario_joined.csv, mahalle_with_coords.csv,
-#        mahalle_fixed.geojson, ne_10m_land.{shp,shx,dbf}
-# PANEL (b) LIFELINE DAMAGE. The İBB scenario reports pipe damage for three
-# networks separately: gas (356 breaks), potable water (461) and wastewater
-# (1042), 1859 in total. They are NOT mapped as three panels because they are
-# nearly the same field - pairwise correlations across the 959 neighbourhoods
-# are 0.84 (gas-water), 0.80 (gas-wastewater) and 0.83 (water-wastewater) - so
-# three panels would repeat one pattern three times. The combined count is
-# mapped instead and the three totals are given in the caption.
-#
-# Output: fig17_bivariate.pdf / .png
-# ============================================================================
 import os, json
 import numpy as np
 import pandas as pd
