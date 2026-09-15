@@ -1,35 +1,4 @@
 #!/usr/bin/env python3
-"""
-sample_vs30.py -- clip the USGS global Vs30 grid to the Istanbul window and
-sample it at the 959 mahalle of the IBB building inventory.
-
-Produces mahalle_vs30.csv, which adds to mahalle_with_coords.csv:
-
-    vs30_point      Vs30 at the mahalle centroid            (m/s)
-    vs30_mean       area-mean Vs30 over the mahalle polygon (m/s, if geometry given)
-    vs30_min/max    range within the polygon                (m/s)
-    vs30_flag       "ok", "water" (grid returns exactly 600 over water),
-                    "nodata", or "no_geometry"
-
-Inputs, all expected in ~/Downloads by default
-----------------------------------------------
-    global_vs30.grd            USGS global Vs30 mosaic, 631 MB
-                               https://earthquake.usgs.gov/data/vs30
-    mahalle_with_coords.csv    inventory + centroid lon/lat
-    mahalle_fixed.geojson      mahalle polygons (optional, enables area means)
-
-Requirements
-------------
-    pip install rasterio pandas numpy
-    pip install rasterstats            # optional, for the area means
-    GMT 6 on PATH                      # optional; used for the clip if present
-
-Usage
------
-    python3 sample_vs30.py                      # everything from ~/Downloads
-    python3 sample_vs30.py --dir /some/folder
-    python3 sample_vs30.py --no-zonal           # centroid sampling only
-"""
 import argparse
 import os
 import shutil
