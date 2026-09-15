@@ -1,22 +1,32 @@
 #!/usr/bin/env python3
 """
-Listing (join): construction of the joined neighbourhood table.
+build_joined_table.py -- construction of the joined neighbourhood table.
 
-Extracted verbatim from the source-code listing (lst:join) of the
-manuscript "Soil amplification and collapse screening in Istanbul".
-This is the code as documented in the paper; the structural/site
-listings (siteresp, mdof, modal) are the representative reference
-implementations described there. Verify paths and parameters against
-your local environment before running.
+Reproduces the code documented in the manuscript
+"Soil amplification and collapse screening in Istanbul: a machine-learning
+model of structural vulnerability".
 
-Description (from the listing caption):
-Construction of the joined neighbourhood table from the two İBB source files. The join key is the numerical UAVT neighbourhood identifier; the four derived columns are the three sums and the ratio defined in the manuscript. The assertions reproduce the consistency checks reported in Section (see manuscript).
+It performs an inner join of the two raw Istanbul Metropolitan Municipality
+(IBB) tables on the numerical UAVT neighbourhood identifier (never on the
+name: the 959 records carry only 766 distinct names), derives the four
+count/ratio columns, runs the consistency assertions reported in the paper,
+and writes mahalle_inventory_scenario_joined.csv.
+
+Paths are resolved relative to this file, so the script can be run from any
+working directory as long as the repository layout (scripts/ and data/) is
+preserved:
+
+    python3 scripts/build_joined_table.py
 """
 
+from pathlib import Path
 import pandas as pd
 
-BLD = "data_Neighborhood-Based Building Numbers for 2017.csv"
-SCN = "data_Earthquake Scenario Analysis Results.csv"
+# Repository data directory, resolved relative to this script (scripts/ -> ../data)
+DATA = Path(__file__).resolve().parent.parent / "data"
+BLD = DATA / "data_ibb_building_numbers_2017.csv"        # building counts, 2017
+SCN = DATA / "data_ibb_scenario_analysis_results.csv"    # Mw 7.5 MMF scenario
+OUT = DATA / "mahalle_inventory_scenario_joined.csv"
 
 # Both files are UTF-8 with a byte-order mark.
 bld = pd.read_csv(BLD, encoding="utf-8-sig")
@@ -35,7 +45,7 @@ assert len(j) == len(bld) == len(scn) == 959      # nothing lost or duplicated
 assert (j.mahalle_uavt == j.mahalle_koy_uavt).all()
 assert (j.ilce_adi == j.ilce_adi_s).all()         # districts agree everywhere
 
-# Derived columns, Eqs. (nbldg)-(rheavy): three sums and one ratio.
+# Derived columns (three sums and one ratio).
 j["n_bldg"]      = j[AGE].sum(axis=1)
 j["heavy"]       = j[DMG[0]] + j[DMG[1]]
 j["dmg_any"]     = j[DMG].sum(axis=1)
@@ -46,4 +56,6 @@ STO = ["1-4 kat_arasi", "5-9 kat_arasi", "9-19 kat_arasi"]
 assert (j[STO].sum(axis=1) == j["n_bldg"]).all()
 assert j["heavy_ratio"].max() <= 1.0
 
-j.to_csv("mahalle_inventory_scenario_joined.csv", index=False, encoding="utf-8")
+OUT.parent.mkdir(parents=True, exist_ok=True)
+j.to_csv(OUT, index=False, encoding="utf-8")
+print(f"wrote {OUT}  ({len(j)} neighbourhoods, {j['n_bldg'].sum():,} buildings)")
