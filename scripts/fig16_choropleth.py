@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-# ============================================================================
-# fig16_collapsemap — İBB scenario heavy-damage ratio by neighbourhood
-#                     (959 mahalle), Istanbul metropolitan area
-# ============================================================================
+
 import os, json
 import numpy as np
 import pandas as pd
@@ -22,11 +19,8 @@ from shapely.strtree import STRtree
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# Figure 12's longitudes; north edge extended to 41.50 so the 22 neighbourhoods
-# above 41.30 N are not clipped.
 W, E, S, N = 27.80, 30.00, 40.55, 41.50
 
-# ---- Nimbus Sans; DejaVu Sans is forbidden by the house style --------------
 import glob
 from matplotlib.font_manager import FontProperties, findfont, fontManager
 for _d in ("/usr/share/fonts/opentype/urw-base35", "/usr/share/fonts/type1/urw-base35",
@@ -39,9 +33,6 @@ for _d in ("/usr/share/fonts/opentype/urw-base35", "/usr/share/fonts/type1/urw-b
 if not ({"Nimbus Sans", "Helvetica"} & {f.name for f in fontManager.ttflist}):
     raise RuntimeError("Nimbus Sans not found; install fonts-urw-base35.")
 
-# Rule 2: two content weights, structural ink below both.
-# LW_MAIN  cluster / top-decile boundary (the emphasised element)
-# LW_SERIES amplification contours, if the overlay is reinstated
 LW_MAIN, LW_SERIES, LW_STRUCT, LW_LEAD = 1.0, 1.0, 0.8, 1.0
 
 plt.rcParams.update({
@@ -60,14 +51,11 @@ if "DejaVu" in findfont(_fp):
 
 SEA, LANDBG, COAST, NODATA = "#d8ecf5", "#f2f2f0", "#3a3a3a", "#cfcfcf"
 
-
 def need(path, what):
     if not os.path.exists(path):
         raise SystemExit(f"ERROR: {os.path.basename(path)} missing - {what}.")
     return path
 
-
-# ---- data ------------------------------------------------------------------
 dmg = pd.read_csv(need(os.path.join(HERE, "mahalle_inventory_scenario_joined.csv"),
                        "İBB inventory joined to scenario damage"))
 xy = pd.read_csv(need(os.path.join(HERE, "mahalle_with_coords.csv"),
@@ -101,9 +89,6 @@ land = unary_union([shape(sr.shape.__geo_interface__).intersection(win)
                     if shape(sr.shape.__geo_interface__).intersects(win)])
 land_parts = land.geoms if land.geom_type == "MultiPolygon" else [land]
 
-# ---- figure ----------------------------------------------------------------
-# Panel (a) damage, panel (b) the site-amplification field, on an identical
-# window so the two can be read against each other directly.
 import xarray as xr
 ampda = xr.open_dataarray(need(os.path.join(HERE, "amp_panel.nc"),
                                "amplification field on this window"))
@@ -122,30 +107,20 @@ for poly in land_parts:
                             fc=LANDBG, ec="none", zorder=1))
 
 norm = Normalize(0.0, float(np.nanmax(val)))
-# Colour scales. Different variables, so different ramps by design; the same
-# variable must never be split across two ramps (see Figure 12, which shares
-# panel (b)'s quantity).
-#   batlow  sequential, lightness monotonic L* 12-87 -- ordered damage ratio
-#   roma    diverging, light centre. Legitimate here only because the scale
-#           spans F = 0.94-1.66, whose midpoint is 1.299: the pale centre lands
-#           on F = 1.3, the rock/intermediate class boundary of the Results and
-#           the level contoured below. Rescale the limits and that coincidence
-#           is lost, at which point roma should be replaced by a sequential map.
-try:                       # optional: only needed for the Crameri names
+
+try:
     import cmcrameri.cm as cmc
     CM = {"batlow": cmc.batlow, "roma": cmc.roma, "vik": cmc.vik,
           "lipari": cmc.lipari, "oslo": cmc.oslo}
 except ImportError:
     CM = {}
 _get = lambda n: CM.get(n) or plt.get_cmap(n)
-CMAP_A = os.environ.get("CMAP_A", "turbo")       # panel (a): damage ratio
-CMAP_B = os.environ.get("CMAP_B", "gist_ncar")   # panel (b): amplification
+CMAP_A = os.environ.get("CMAP_A", "turbo")
+CMAP_B = os.environ.get("CMAP_B", "gist_ncar")
 cmap = _get(CMAP_A)
-
 
 def parts(g):
     return g.geoms if g.geom_type == "MultiPolygon" else [g]
-
 
 shown, cols, blank = [], [], []
 for g_, v in zip(polys, val):
@@ -172,7 +147,6 @@ for poly in land_parts:
     for ring in poly.interiors:
         ax.plot(*np.asarray(ring.coords).T, color=COAST, lw=LW_STRUCT, zorder=5)
 
-# ---- named districts and water ---------------------------------------------
 DISTRICTS = {"Esenyurt": (28.673, 41.029), "Avc\u0131lar": (28.721, 40.979),
              "K\u00fc\u00e7\u00fck\u00e7ekmece": (28.780, 40.997),
              "Bak\u0131rk\u00f6y": (28.872, 40.981), "Zeytinburnu": (28.905, 40.992)}
@@ -193,7 +167,6 @@ ax.text(28.45, 40.70, "Sea of Marmara", fontsize=10, style="italic",
 ax.text(29.62, 41.22, "Black Sea", fontsize=9, style="italic",
         color="#1f6f93", ha="center", zorder=6)
 
-# ---- frame furniture -------------------------------------------------------
 for a_ in (ax, axb):
     a_.xaxis.set_major_locator(plt.MultipleLocator(0.5))
     a_.yaxis.set_major_locator(plt.MultipleLocator(0.2))
@@ -219,19 +192,13 @@ ax.add_patch(FancyArrow(nax, nay - 0.10, 0, 0.13, width=0.0, head_width=0.045,
 ax.text(nax, nay + 0.055, "N", ha="center", va="bottom", fontsize=9,
         fontweight="bold", zorder=8)
 
-# ===================== panel (b): site amplification ========================
 for poly in land_parts:
     axb.add_patch(MplPolygon(np.asarray(poly.exterior.coords), closed=True,
                              fc=LANDBG, ec="none", zorder=1))
 ANORM = Normalize(float(np.nanmin(AMP)), float(np.nanmax(AMP)))
 imb = axb.pcolormesh(ALON, ALAT, AMP, cmap=_get(CMAP_B), norm=ANORM,
                      shading="auto", zorder=2, rasterized=True)
-# Contours at 1.1, 1.3 and 1.5. Smoothing is reduced from sigma = 2.0 to 0.5
-# cells (about 250 m) because the heavier smoothing capped the field at 1.43 and
-# erased the 1.5 level entirely. At sigma = 0.5 the levels enclose 90.7%, 25.7%
-# and 0.3% of land respectively: 1.1 traces little more than the coast and 1.5
-# survives only as a few isolated patches, so 1.3 is the one that divides the
-# field and is the only level labelled inline.
+
 from scipy.ndimage import gaussian_filter
 _f = np.where(np.isfinite(AMP), AMP, np.nanmean(AMP))
 _sm = gaussian_filter(_f, 0.5)
@@ -239,10 +206,7 @@ LEVELS = [1.1, 1.3, 1.5]
 csb = axb.contour(ALON, ALAT, _sm, levels=LEVELS, colors="black",
                   linewidths=[LW_SERIES * 0.8, LW_SERIES, LW_SERIES * 0.8],
                   zorder=4)
-# Label only a few selected segments per level. clabel by default annotates
-# every segment, which on this fragmented field repeats "1.3" dozens of times.
-# allsegs gives the polylines per level directly (matplotlib >= 3.8 no longer
-# exposes .collections); the longest well-separated ones are labelled.
+
 WANT = {1.1: 3, 1.3: 5, 1.5: 1}
 spots = []
 for lv, segs in zip(csb.levels, csb.allsegs):

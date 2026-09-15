@@ -12,10 +12,6 @@ FEATURES_FULL = ["vs30", "sed_thickness", "dist_fault", "T0", "bldg_height",
                  "Sa", "amp_factor"]
 FEATURES_NOLEAK = ["vs30", "sed_thickness", "dist_fault", "T0", "bldg_height"]
 
-
-# --------------------------------------------------------------------------- #
-# Models: the two families reported in the revised Section 3.4.                #
-# --------------------------------------------------------------------------- #
 def make_models(seed, pos_weight, allow_fallback=False):
     rf = RandomForestClassifier(n_estimators=500, max_depth=20,
                                 class_weight="balanced", random_state=seed,
@@ -42,9 +38,7 @@ def make_models(seed, pos_weight, allow_fallback=False):
         gb_name = "HistGradientBoosting"
     return [("Random forest", rf), (gb_name, gb)]
 
-
 def score(model, Xtr, ytr, Xte, yte):
-    """Fit on one fold and return (accuracy, F1 on collapse, ROC-AUC)."""
     model.fit(Xtr, ytr)
     p = model.predict_proba(Xte)[:, 1]
     yhat = (p >= 0.5).astype(int)
@@ -53,27 +47,14 @@ def score(model, Xtr, ytr, Xte, yte):
             f1_score(yte, yhat, pos_label=1, zero_division=0),
             auc)
 
-
 def summarise(rows):
-    """Mean and across-fold standard deviation of a list of metric triples."""
     a = np.array(rows, dtype=float)
     return np.nanmean(a, axis=0), np.nanstd(a, axis=0)
-
 
 def cell(mean, sd):
     return "$%.3f \\pm %.3f$" % (mean, sd)
 
-
-# --------------------------------------------------------------------------- #
-# Fold designs                                                                 #
-# --------------------------------------------------------------------------- #
 def block_folds(df, block_m, n_folds, rng):
-    """5 x 5 km contiguous blocks, assigned to folds in order of prevalence.
-
-    Blocks are sorted by their collapse rate and dealt round-robin to the folds,
-    so each fold carries a comparable prevalence while every cell of a block
-    stays wholly inside one fold (Section 3.8 of the manuscript).
-    """
     bx = np.floor(df["x"].to_numpy() / block_m).astype(int)
     by = np.floor(df["y"].to_numpy() / block_m).astype(int)
     block = pd.Series([f"{i}_{j}" for i, j in zip(bx, by)], index=df.index)
@@ -88,16 +69,13 @@ def block_folds(df, block_m, n_folds, rng):
              np.bincount(fold, minlength=n_folds).tolist()))
     return fold
 
-
 def district_folds(df):
     codes, names = pd.factorize(df["district"])
     print("    %d districts: %s" % (len(names), ", ".join(map(str, names[:8]))
                                     + (" ..." if len(names) > 8 else "")))
     return codes
 
-
 def run_grouped(df, feats, folds, seed, allow_fallback=False):
-    """Fit and score each model once per fold, holding out one group."""
     X, y = df[feats].to_numpy(float), df["label"].to_numpy(int)
     pos_w = (y == 0).sum() / max((y == 1).sum(), 1)
     out = {}
@@ -111,8 +89,6 @@ def run_grouped(df, feats, folds, seed, allow_fallback=False):
         out[name] = summarise(rows)
     return out
 
-
-# --------------------------------------------------------------------------- #
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("csv")
@@ -138,7 +114,6 @@ def main():
         print("  NOTE: the manuscript states N = 2800; this file has %d. "
               "Reconcile before pasting." % len(df))
 
-    # ---- Table 9: leakage-controlled row, same random 25 % hold-out -------- #
     print("\n[1/3] leakage-controlled ablation (random 25 % hold-out)")
     tr, te = train_test_split(df, test_size=0.25, stratify=df["label"],
                               random_state=a.seed)
@@ -155,7 +130,6 @@ def main():
           "already in Table 8)" % (full[0], full[2]))
     print("    no F, no Sa   acc=%.3f  AUC=%.3f" % (noleak[0], noleak[2]))
 
-    # ---- Table 10: the two spatially independent designs ------------------ #
     print("\n[2/3] spatial block cross-validation")
     blk = run_grouped(df, FEATURES_FULL,
                       block_folds(df, a.block_km * 1000.0, a.folds, a.seed),
@@ -164,7 +138,6 @@ def main():
     lodo = run_grouped(df, FEATURES_FULL, district_folds(df), a.seed,
                        a.allow_fallback)
 
-    # ---- emit the LaTeX rows --------------------------------------------- #
     print("\n" + "=" * 74)
     print("Table 9 (tab:ablation) -- replace the [VALUE] row at line 809:")
     print("=" * 74)
@@ -179,7 +152,7 @@ def main():
     for design, res in (("Spatial block CV ($5\\times5$\\,km)", blk),
                         ("Leave-one-district-out", lodo)):
         for name, (m, s) in res.items():
-            short = name          # the real fitted model, never a guess
+            short = name
             print("\\textcolor{blue}{%s} & \\textcolor{blue}{%s} & "
                   "\\textcolor{blue}{%s} & \\textcolor{blue}{%s} & "
                   "\\textcolor{blue}{%s} \\\\"
@@ -193,7 +166,6 @@ def main():
               "the model in Tables 8 and 10 to match." % gb_name)
     print("After pasting, confirm nothing is left:  "
           "grep -n '\\[VALUE\\]' article_06082026.tex")
-
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ============================================================================
+
 import os, json
 import numpy as np
 import pandas as pd
@@ -45,14 +45,11 @@ if "DejaVu" in findfont(_fp):
 
 SEA, LANDBG, COAST, NODATA = "#d8ecf5", "#f2f2f0", "#3a3a3a", "#cfcfcf"
 
-
 def need(p, what):
     if not os.path.exists(p):
         raise SystemExit(f"ERROR: {os.path.basename(p)} missing - {what}.")
     return p
 
-
-# ---- data ------------------------------------------------------------------
 dmg = pd.read_csv(need(os.path.join(HERE, "mahalle_inventory_scenario_joined.csv"),
                        "İBB inventory joined to scenario damage"))
 xy = pd.read_csv(need(os.path.join(HERE, "mahalle_with_coords.csv"), "centroids"))
@@ -65,23 +62,21 @@ tab = xy.merge(dmg[["mahalle_uavt", "n_bldg", "heavy_ratio", "pre80", "pipes",
 
 qd = tab.heavy_ratio.quantile([1/3, 2/3]).values
 qa = tab.pre80.quantile([1/3, 2/3]).values
-tab["di"] = np.digitize(tab.heavy_ratio, qd)      # 0 low .. 2 high damage
-tab["ai"] = np.digitize(tab.pre80, qa)            # 0 new .. 2 old stock
+tab["di"] = np.digitize(tab.heavy_ratio, qd)
+tab["ai"] = np.digitize(tab.pre80, qa)
 
-# ---- 3x3 palette -----------------------------------------------------------
 SCHEME = os.environ.get("BIVAR", "nipy_spectral")
 if SCHEME == "classic":
-    # hue = damage, saturation = age; decodes on both axes independently
+
     GRID = [["#e8e8e8", "#ace4e4", "#5ac8c8"],
             ["#dfb0d6", "#a5add3", "#5698b9"],
             ["#be64ac", "#8c62aa", "#3b4994"]]
 else:
     cm = plt.get_cmap(SCHEME)
-    # nine evenly spaced samples, avoiding the black and white extremes
+
     sm = [cm(x) for x in np.linspace(0.06, 0.94, 9)]
     GRID = [[sm[0], sm[1], sm[2]], [sm[3], sm[4], sm[5]], [sm[6], sm[7], sm[8]]]
 
-# ---- geometry and spatial join --------------------------------------------
 gj = json.load(open(need(os.path.join(HERE, "mahalle_fixed.geojson"), "polygons")))
 polys = [shape(f["geometry"]) for f in gj["features"]]
 tree = STRtree(polys)
@@ -107,12 +102,9 @@ land = unary_union([shape(sr.shape.__geo_interface__).intersection(win)
                     if shape(sr.shape.__geo_interface__).intersects(win)])
 land_parts = land.geoms if land.geom_type == "MultiPolygon" else [land]
 
-
 def parts(g):
     return g.geoms if g.geom_type == "MultiPolygon" else [g]
 
-
-# ---- figure ----------------------------------------------------------------
 fig, (ax, axb) = plt.subplots(2, 1, figsize=(8.4, 9.4))
 for a_ in (ax, axb):
     a_.set_facecolor(SEA)
@@ -135,7 +127,6 @@ ax.add_collection(PatchCollection(blank, facecolor=NODATA, edgecolor="white",
 ax.add_collection(PatchCollection(shown, facecolor=cols, edgecolor="white",
                                   linewidths=0.25, zorder=3))
 
-# outline the two contrasting populations named in the text
 for kk, col in ((6, "black"), (8, "black")):
     u = unary_union([g_ for g_, k in zip(polys, cls) if k == kk])
     if not u.is_empty:
@@ -168,14 +159,10 @@ ax.text(28.98, 40.700, "Sea of Marmara", fontsize=10, style="italic",
 ax.text(29.62, 41.28, "Black Sea", fontsize=9, style="italic",
         color="#1f6f93", ha="center", zorder=6)
 
-# ===================== panel (b): lifeline damage ===========================
 from matplotlib.colors import Normalize
 CMAP_B = os.environ.get("CMAP_B", "plasma")
 pmax = float(np.nanmax(pipe))
-# 38% of neighbourhoods have no breaks and the median is 1, so a linear scale
-# to the maximum (25) leaves nearly the whole map in the first colour. The
-# scale is cut at the 95th percentile (7 breaks) with the tail shown as an
-# over-range colour, which is stated on the bar.
+
 pcut = float(np.nanpercentile(pipe, 95))
 pnorm = Normalize(0, pcut)
 pcm = plt.get_cmap(CMAP_B)
@@ -231,7 +218,6 @@ ax.add_patch(FancyArrow(nax, nay - 0.10, 0, 0.13, width=0.0, head_width=0.045,
 ax.text(nax, nay + 0.055, "N", ha="center", va="bottom", fontsize=9,
         fontweight="bold", zorder=8)
 
-# ---- 3x3 key ---------------------------------------------------------------
 kx = fig.add_axes([0.325, 0.556, 0.086, 0.098])
 kx.set_xlim(0, 3); kx.set_ylim(0, 3); kx.set_xticks([]); kx.set_yticks([])
 for r_ in range(3):

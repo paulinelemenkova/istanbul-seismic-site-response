@@ -8,17 +8,10 @@ import sys
 import numpy as np
 import pandas as pd
 
-# Istanbul-Marmara analysis window (lon_min, lon_max, lat_min, lat_max)
 REGION = (27.4, 30.1, 40.5, 41.6)
-WATER_VALUE = 600.0          # the USGS grid assigns exactly 600 m/s over water
-
+WATER_VALUE = 600.0
 
 def clip_grid(src, dst_tif):
-    """Cut the global grid to REGION and write a GeoTIFF.
-
-    Uses GMT when available (fastest and handles the native .grd cleanly),
-    otherwise falls back to GDAL through rasterio.
-    """
     w, e, s, n = REGION
     if shutil.which("gmt"):
         tmp = dst_tif.replace(".tif", ".grd")
@@ -42,7 +35,6 @@ def clip_grid(src, dst_tif):
             with rasterio.open(dst_tif, "w", **prof) as out:
                 out.write(arr, 1)
     return dst_tif
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -71,7 +63,6 @@ def main():
     except ImportError:
         sys.exit("rasterio is required:  pip install rasterio")
 
-    # ---- 1. clip ---------------------------------------------------------- #
     print("[1/4] clipping the global grid to the Istanbul window")
     if os.path.exists(clipped):
         print("  %s already exists; reusing it" % os.path.basename(clipped))
@@ -81,7 +72,6 @@ def main():
         print("  clipped raster: %d x %d cells, CRS %s"
               % (src.width, src.height, src.crs))
 
-    # ---- 2. centroid sampling --------------------------------------------- #
     print("[2/4] sampling at mahalle centroids")
     d = pd.read_csv(csv)
     if not {"lon", "lat"} <= set(d.columns):
@@ -98,7 +88,6 @@ def main():
         vals = np.where(vals == nodata, np.nan, vals)
     d["vs30_point"] = np.round(vals, 1)
 
-    # ---- 3. area means over the polygons ---------------------------------- #
     d["vs30_mean"] = np.nan
     d["vs30_min"] = np.nan
     d["vs30_max"] = np.nan
@@ -109,16 +98,11 @@ def main():
             from shapely.geometry import shape
             print("[3/4] computing area means over the mahalle polygons")
             g = json.load(open(gj, encoding="utf-8"))
-            # all_touched=True is essential: many urban mahalle are smaller
-            # than a 30 arcsec cell (~0.77 km), so with the default no cell
-            # centre falls inside them and the mean returns None.
+
             st = zonal_stats(g["features"], clipped,
                              stats=["mean", "min", "max"], all_touched=True,
                              nodata=nodata if nodata is not None else -32768)
-            # Match polygons to rows by their centroid, which is exactly how the
-            # lon/lat columns of mahalle_with_coords.csv were produced. This is
-            # exact, unlike matching on mahalle names (959 rows carry only 766
-            # distinct names).
+
             lut = {}
             for f, s_ in zip(g["features"], st):
                 c = shape(f["geometry"]).centroid
@@ -136,13 +120,10 @@ def main():
     else:
         print("[3/4] no polygon file; skipping area means")
 
-    # Where no polygon mean could be computed, fall back to the point value so
-    # that a usable Vs30 exists for every mahalle carrying coordinates.
     d["vs30_used"] = d.vs30_mean.fillna(d.vs30_point)
     d["vs30_source"] = np.where(d.vs30_mean.notna(), "polygon mean",
                        np.where(d.vs30_point.notna(), "centroid point", "none"))
 
-    # ---- 4. flag and write ------------------------------------------------ #
     print("[4/4] flagging and writing")
     flag = np.where(d.vs30_point.isna(), "nodata",
            np.where(np.isclose(d.vs30_point, WATER_VALUE), "water", "ok"))
@@ -165,7 +146,6 @@ def main():
             print(d.loc[d.vs30_flag == "water",
                         ["ilce_adi", "mahalle_adi", "lon", "lat"]]
                   .head(10).to_string(index=False))
-
 
 if __name__ == "__main__":
     main()

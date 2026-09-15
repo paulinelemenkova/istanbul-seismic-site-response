@@ -1,27 +1,4 @@
 #!/usr/bin/env python3
-"""
-fig08_workflow.py -- Figure 8 of the Istanbul soil-amplification manuscript:
-the methodology workflow, from raw data through GMT dataset construction and
-feature engineering to a trained resist/collapse surrogate and screening maps.
-
-Colour: qual-mixed-12 (Statistik Stadt Zurich / Interactive Things, 2015;
-cpt-city ssz/qual-mixed-12.cpt, CC BY-SA 4.0). A genuinely *qualitative* scale
-of twelve colours built as six light/dark pairs -- blue, pink, red, yellow,
-green, teal -- which is exactly the structure this figure needs: the dark member
-of a pair fills the stage header and the light member of the same pair fills the
-body beneath it, so no tint has to be synthesised. Five of the six pairs are
-used; red is dropped because it is the nearest neighbour of pink (the retained
-five have a minimum pairwise CIELAB separation of 29.4).
-
-Header labels take a darkened ink of the pair's own hue rather than white: none
-of the six dark members reaches 4.5:1 against white text (the best is 3.9:1), so
-white would fail on every header and outright on the yellow.
-
-Font: apt-get install fonts-urw-base35    (Debian/Ubuntu)
-      brew install --cask font-urw-base35 (macOS)
-
-Usage:  python3 fig08_workflow.py [outdir]
-"""
 import glob
 import re
 import os
@@ -34,17 +11,12 @@ import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties, findfont, fontManager
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
-# --------------------------------------------------------------------------- #
-# 1. Font: Nimbus Sans, with Helvetica as the only permitted fallback.         #
-# --------------------------------------------------------------------------- #
 URW_DIRS = ("/usr/share/fonts/opentype/urw-base35",
             "/usr/share/fonts/type1/urw-base35",
             "/usr/local/share/fonts/urw-base35",
             "/opt/homebrew/share/fonts", "/Library/Fonts")
 
-
 def ensure_nimbus():
-    """Register Nimbus Sans; raise rather than let DejaVu Sans through."""
     for d in URW_DIRS:
         for f in glob.glob(os.path.join(d, "NimbusSans-*.otf")):
             try:
@@ -55,11 +27,10 @@ def ensure_nimbus():
         raise RuntimeError("Nimbus Sans not found. Install fonts-urw-base35; "
                            "DejaVu Sans is forbidden by the house style.")
 
-
 ensure_nimbus()
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["Nimbus Sans", "Helvetica"],      # never DejaVu
+    "font.sans-serif": ["Nimbus Sans", "Helvetica"],
     "mathtext.fontset": "custom",
     "mathtext.rm": "Nimbus Sans", "mathtext.it": "Nimbus Sans:italic",
     "mathtext.bf": "Nimbus Sans:bold", "mathtext.sf": "Nimbus Sans",
@@ -73,27 +44,16 @@ FONT_RESOLVED = findfont(_fp)
 if "DejaVu" in FONT_RESOLVED:
     raise RuntimeError("resolved to %s: DejaVu Sans is forbidden." % FONT_RESOLVED)
 
-# --------------------------------------------------------------------------- #
-# 2. Sizes: three only, all inside the 8-12 pt band.                           #
-# --------------------------------------------------------------------------- #
-FS_TITLE = 11.0      # level 1: in-figure title  (bold)
-FS_HEAD = 9.0        # level 2: stage headers    (bold)
-FS_ITEM = 8.0        # level 4: stage items, loop caption
+FS_TITLE = 11.0
+FS_HEAD = 9.0
+FS_ITEM = 8.0
 
-# Rule 2: two weights for content. The stage-to-stage flow is what the figure is
-# about, so it takes the emphasised weight; the feedback loop is secondary.
-# Structural ink (box outlines) stays below both so it never reads as flow.
 LW_MAIN, LW_SERIES, LW_STRUCT = 2.0, 1.2, 0.8
 
-# --------------------------------------------------------------------------- #
-# 2b. Palette: qual-mixed-12 (see the module docstring).                       #
-# --------------------------------------------------------------------------- #
 CPT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                    "qual-mixed-12.cpt")
 
-
 def read_cpt_discrete(path):
-    """Read a discrete GMT .cpt as a list of RGB triples, one per slice."""
     out = []
     for line in open(path):
         line = line.strip()
@@ -104,42 +64,32 @@ def read_cpt_discrete(path):
             out.append(tuple(int(v) / 255 for v in f[1].split("/")))
     return out
 
-
 def _lum(rgb):
     a = np.asarray(rgb[:3], float)
     a = np.where(a <= 0.04045, a / 12.92, ((a + 0.055) / 1.055) ** 2.4)
     return float(0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2])
 
-
 def contrast(rgb, other=(1, 1, 1)):
-    """WCAG contrast ratio between two colours."""
     a, b = sorted((_lum(rgb), _lum(other)), reverse=True)
     return (a + 0.05) / (b + 0.05)
 
-
 def darken_to(rgb, target=4.5, ref=(1, 1, 1)):
-    """Scale a colour toward black until it clears *target* against *ref*."""
     c = np.asarray(rgb[:3], float)
     for k in np.linspace(1.0, 0.0, 128):
         if contrast(c * k, ref) >= target:
             return tuple(c * k)
     return (0.0, 0.0, 0.0)
 
-
-# The twelve entries are six (light, dark) pairs; keep five, dropping red as the
-# nearest neighbour of pink.
 _C = read_cpt_discrete(CPT)
-PAIRS = [(_C[i], _C[i + 1]) for i in range(0, 12, 2)]      # blue pink red
-KEEP = [0, 1, 3, 4, 5]                                     # yellow green teal
+PAIRS = [(_C[i], _C[i + 1]) for i in range(0, 12, 2)]
+KEEP = [0, 1, 3, 4, 5]
 
-BOD = [PAIRS[i][0] for i in KEEP]                          # light member: body
-HDR = [PAIRS[i][1] for i in KEEP]                          # dark member: header
+BOD = [PAIRS[i][0] for i in KEEP]
+HDR = [PAIRS[i][1] for i in KEEP]
 STAGE = HDR
-# Outlines and bullets sit on the pale body tint, not on white, so that is the
-# reference they must be measured against.
+
 INK = [darken_to(c, 4.5, ref=BOD[i]) for i, c in enumerate(HDR)]
-# No dark member clears 4.5:1 against white text, so every header label is a
-# darkened ink of its own hue, measured against that header rather than white.
+
 HDR_TXT = [darken_to(c, 4.5, ref=c) for c in HDR]
 
 TITLES = ["1 \u00b7 Input data",
@@ -148,9 +98,6 @@ TITLES = ["1 \u00b7 Input data",
           "4 \u00b7 Supervised\nlearning",
           "5 \u00b7 Evaluation\n& prediction"]
 
-# Source strings are single-line; wrap_fit() below breaks them to the measured
-# box width, so the wrap adapts automatically if the font, the point size or the
-# box geometry ever changes.
 ITEMS = [
     ["Earthquake catalogue",
      "Focal mechanisms",
@@ -174,15 +121,7 @@ ITEMS = [
      "Surrogate screening maps"],
 ]
 
-
 def wrap_fit(ax, renderer, text, max_px, **kw):
-    """Greedy word wrap to a measured pixel width.
-
-    Splits on spaces and, where a single token is still too wide, after internal
-    hyphens (the hyphen stays at the end of the line). Width is measured with a
-    throwaway Text artist so that mathtext runs such as $V_{s30}$ are sized
-    correctly rather than by a character count.
-    """
     def width(s):
         probe = ax.text(0, 0, s, **kw)
         w = probe.get_window_extent(renderer=renderer).width
@@ -216,29 +155,24 @@ def wrap_fit(ax, renderer, text, max_px, **kw):
         lines.append(cur)
     return "\n".join(lines)
 
-
-# --------------------------------------------------------------------------- #
-# 3. Geometry, in a 0-100 schematic space mapped to the final printed size.    #
-# --------------------------------------------------------------------------- #
 CM = 1 / 2.54
-FIG_W, FIG_H = 17.5 * CM, 7.8 * CM         # journal double-column width
+FIG_W, FIG_H = 17.5 * CM, 7.8 * CM
 
-W, GAP = 18.5, 1.85                        # stage box width / inter-box gap
+W, GAP = 18.5, 1.85
 X0 = (100 - (5 * W + 4 * GAP)) / 2.0
-BOT, TOP = 2.0, 72.0                       # stage box vertical extent
-HDR_H = 12.0                               # header band height
-PAD_L, PAD_R = 2.4, 0.6                    # text inset from the box edges
-ITEM_Y = [52.0, 37.5, 23.0, 8.5]          # item centres
+BOT, TOP = 2.0, 72.0
+HDR_H = 12.0
+PAD_L, PAD_R = 2.4, 0.6
+ITEM_Y = [52.0, 37.5, 23.0, 8.5]
 
 fig = plt.figure(figsize=(FIG_W, FIG_H))
-ax = fig.add_axes([0, 0, 1, 1])            # schematic uses the whole canvas
+ax = fig.add_axes([0, 0, 1, 1])
 ax.set_xlim(0, 100)
 ax.set_ylim(0, 100)
 ax.axis("off")
-fig.canvas.draw()                          # renderer needed to measure text
+fig.canvas.draw()
 renderer = fig.canvas.get_renderer()
 
-# Usable text width inside a stage box, in device pixels.
 MAX_PX = (ax.transData.transform((W - PAD_L - PAD_R, 0))[0]
           - ax.transData.transform((0, 0))[0])
 
@@ -249,7 +183,7 @@ ax.text(50, 99.0,
         ha="center", va="top", fontsize=FS_TITLE, weight="bold",
         color="#243040", linespacing=1.30)
 
-item_texts, head_texts = [], []            # (Text, stage index) for the checks
+item_texts, head_texts = [], []
 for i in range(5):
     x = X0 + i * (W + GAP)
 
@@ -275,15 +209,13 @@ for i in range(5):
         item_texts.append((t_art, i))
         if os.environ.get("DBG"): print("  stage %d: %d lines | %s" % (i+1, txt.count(chr(10))+1, txt.replace(chr(10)," / ")))
 
-    if i < 4:                                          # inter-stage arrow
+    if i < 4:
         ax.add_patch(FancyArrowPatch((x + W + 0.25, 40.0),
                                      (x + W + GAP - 0.25, 40.0),
                                      arrowstyle="-|>", mutation_scale=9,
                                      lw=LW_MAIN, color="#3a4a5e", zorder=4))
 
-# Feedback loop: evaluation (5) back to supervised learning (4). Secondary to
-# the main path, so LW_SERIES rather than LW_MAIN (rule 2).
-LOOP = INK[3]                              # the hue of the stage it returns to
+LOOP = INK[3]
 xa = X0 + 4 * (W + GAP) + W / 2
 xb = X0 + 3 * (W + GAP) + W / 2
 RAD = 0.22
@@ -293,20 +225,9 @@ loop_arc = FancyArrowPatch((xa, TOP + 0.5), (xb, TOP + 0.5),
                            lw=LW_SERIES, ls="--", color=LOOP, zorder=4)
 ax.add_patch(loop_arc)
 def arc_points(patch):
-    """Densified display-space points along a FancyArrowPatch.
-
-    `get_path()` returns DATA-space Bezier *control* points -- only 7 for this
-    arc -- so testing those against a text box misses the curve between them.
-    Transform first, then `to_polygons` to flatten the Beziers into segments.
-    """
     tp = patch.get_transform().transform_path(patch.get_path())
     return np.vstack([np.asarray(q) for q in tp.to_polygons(closed_only=False)])
 
-
-# Rule 3: the caption is a DIRECT label on the arc it names. Its height is taken
-# from the *rendered* apex rather than from the nominal arc3 geometry, because
-# `rad` is applied in display space and these axes are far from square, so the
-# analytic apex is wrong in data units by a wide margin.
 apex_y = ax.transData.inverted().transform(
     (0, arc_points(loop_arc)[:, 1].max()))[1]
 loop_lbl = ax.annotate("cross-validated tuning", xy=((xa + xb) / 2, apex_y),
@@ -314,10 +235,6 @@ loop_lbl = ax.annotate("cross-validated tuning", xy=((xa + xb) / 2, apex_y),
                        ha="center", va="bottom", fontsize=FS_ITEM,
                        style="italic", color=LOOP, zorder=5)
 
-# --------------------------------------------------------------------------- #
-# 4. Rule 1 check: verify by measurement that no label leaves its box and that #
-#    consecutive items in a column do not collide vertically.                  #
-# --------------------------------------------------------------------------- #
 fig.canvas.draw()
 renderer = fig.canvas.get_renderer()
 
@@ -349,8 +266,7 @@ if bad_h or bad_v:
         print("  V-COLLISION stage %d: items overlap by %.1f px" % (stage, -gap))
     raise SystemExit("rule 1 violated: %d horizontal, %d vertical."
                      % (len(bad_h), len(bad_v)))
-# The title and the loop caption sit outside every stage box; check they clear
-# the boxes and each other (rules 1 and 10).
+
 free = [("loop caption", loop_lbl)]
 free += [("title", t) for t in ax.texts if t.get_text().startswith("Methodology")]
 box_top_px = ax.transData.transform((0, TOP))[1]
@@ -377,19 +293,15 @@ print("rule 1 check: %d labels, all inside their boxes, no vertical "
       "collisions; title and loop caption clear of the boxes and of each other"
       % (len(item_texts) + len(head_texts)))
 
-# --------------------------------------------------------------------------- #
-# 5. Export: vector PDF + 600 dpi PNG.                                         #
-# --------------------------------------------------------------------------- #
 outdir = sys.argv[1] if len(sys.argv) > 1 else "figures"
 os.makedirs(outdir, exist_ok=True)
 for ext, kw in (("pdf", {}), ("png", {"dpi": 600})):
-    fig.savefig(os.path.join(outdir, "fig08_workflow." + ext),
+    fig.savefig(os.path.join(outdir, "fig11_workflow." + ext),
                 bbox_inches="tight", pad_inches=0.02, facecolor="white", **kw)
 
-# Flatten the PNG onto white: journals reject figures with an alpha channel.
 try:
     from PIL import Image
-    _p = os.path.join(outdir, "fig08_workflow.png")
+    _p = os.path.join(outdir, "fig11_workflow.png")
     _im = Image.open(_p).convert("RGBA")
     _bg = Image.new("RGB", _im.size, (255, 255, 255))
     _bg.paste(_im, mask=_im.split()[3])
@@ -397,7 +309,7 @@ try:
 except ImportError:
     print("note: Pillow not available; PNG left with an alpha channel")
 
-print("wrote fig08_workflow.pdf / .png in %s" % outdir)
+print("wrote fig11_workflow.pdf / .png in %s" % outdir)
 print("font resolved to: %s" % FONT_RESOLVED)
-print("verify embedding: pdffonts %s/fig08_workflow.pdf | "
+print("verify embedding: pdffonts %s/fig11_workflow.pdf | "
       "grep -i -e nimbus -e dejavu" % outdir)

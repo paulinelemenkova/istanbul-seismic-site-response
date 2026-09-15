@@ -1,28 +1,13 @@
 #!/usr/bin/env bash
-# =====================================================================
-# fig01_studyarea.sh
-# Study area: the Sea of Marmara and Istanbul -- FULLY TOPOGRAPHIC map.
-# GEBCO high-resolution shaded relief + 1000 m isolines + 20 cities +
-# orthographic locator inset. No seismicity, no fault traces.
-# Generic Mapping Tools (GMT) 6, modern mode.
-#
-# Inputs in the working dir:
-#   marmara_relief.nc   GEBCO 2026 DEM (from the supplied GeoTIFF;
-#                       built with: gmt grdconvert gebco_*.tif marmara_relief.nc)
-#
-# Run:  bash fig01_studyarea.sh   -> fig01_studyarea.pdf + fig01_studyarea.png
-# =====================================================================
 set -e
 
-REG=-R25/31/39/42                  # GEBCO extent (W/E/S/N)
-PROJ=-JM16c                        # Mercator, 16 cm wide
+REG=-R25/31/39/42
+PROJ=-JM16c
 OUT=fig01_studyarea
 
-# Build the GMT grid from the supplied GEBCO GeoTIFF (once).
-GEBCO_TIF=gebco_2026_n42_0_s39_0_w25_0_e31_0_geotiff.tif   #> EDIT: your GEBCO file
+GEBCO_TIF=gebco_2026_n42_0_s39_0_w25_0_e31_0_geotiff.tif
 [ -f marmara_relief.nc ] || gmt grdconvert "$GEBCO_TIF" marmara_relief.nc
 
-# ----------------------------------------------------------- house style
 gmt set FORMAT_GEO_MAP=dddF \
         MAP_FRAME_TYPE=plain MAP_FRAME_PEN=0.9p,gray25 \
         MAP_TICK_PEN_PRIMARY=0.7p,gray25 \
@@ -33,27 +18,19 @@ gmt set FORMAT_GEO_MAP=dddF \
 
 gmt begin ${OUT} pdf,png E400
 
-  # ---------------------------------------- 1. relief palette (anchored at 0 m)
   gmt makecpt -Cgeo -T-2200/2500 -H > topo.cpt
 
-  # ---------------------------------------- 2. GEBCO shaded relief
-  # -I+a315+ne0.8 derives the hillshade from the grid (315 deg = NW light).
   gmt grdimage marmara_relief.nc -Ctopo.cpt -I+a315+ne0.8 $REG $PROJ
 
-  # ---------------------------------------- 3. coast / borders / lakes / rivers
   gmt coast -Df -W0.4p,gray20 -N1/0.6p,gray25,- -C150/195/225 \
             -I1/0.4p,steelblue -I2/0.25p,steelblue
 
-  # ---------------------------------------- 4. topographic isolines every 1000 m (thin)
   gmt grdcontour marmara_relief.nc -C1000 -W0.3p,gray25@25
 
-  # ---------------------------------------- 5. relief colour bar (LEFT of map, vertical)
   gmt colorbar -Ctopo.cpt -DJML+w9c/0.34c+o1.6c/0c+ml+e \
       -Bxa1000f200+l"Elevation / bathymetry (m)" -By \
       --FONT_LABEL=9p,black --FONT_ANNOT_PRIMARY=8p,black
 
-  # ---------------------------------------- 6. cities (20) -- yellow circles
-  # 19 regular cities
   gmt plot -Sc0.13c -Gyellow -W0.4p,black <<'EOF'
 29.92 40.77
 27.51 40.98
@@ -75,17 +52,13 @@ gmt begin ${OUT} pdf,png E400
 26.63 40.85
 28.36 40.21
 EOF
-  # Istanbul -- enlarged symbol
   gmt plot -Sc0.34c -Gyellow -W0.7p,black <<'EOF'
 28.98 41.01
 EOF
 
-  # ---------------------------------------- 7. labels
-  # water bodies
   gmt text -N -F+f13p,Helvetica-Oblique,white+jCM <<'EOF'
 28.833 41.80 Black Sea
 EOF
-  # Sea of Marmara -- blue, smaller; Aegean Sea -- blue
   gmt text -N -F+f11p,Helvetica-Oblique,dodgerblue+jCM <<'EOF'
 28.30 40.6667 Sea of Marmara
 EOF
@@ -95,7 +68,6 @@ EOF
   gmt text -N -F+f8p,Helvetica-Oblique,white+jCM <<'EOF'
 26.45 40.55 Gulf of Saros
 EOF
-  # city names (regular, 8.5p) + white halo
   gmt text -N -F+f8.5p,Helvetica-Bold,black+jLB -D0.10c/0.10c -Gwhite@30 <<'EOF'
 29.92 40.78 Izmit
 27.51 40.99 Tekirdag
@@ -117,19 +89,15 @@ EOF
 26.63 40.86 Kesan
 28.36 40.22 Karacabey
 EOF
-  # Istanbul -- enlarged label
   gmt text -N -F+f14p,Helvetica-Bold,black+jLB -D0.18c/0.16c -Gwhite@25 <<'EOF'
 28.98 41.02 Istanbul
 EOF
 
-  # ---------------------------------------- 8. frame, graticule, title
   gmt basemap -Bxa1f0.5g1 -Bya1f0.5g1 -BWeSn+t"Study area: the Sea of Marmara and Istanbul"
 
-  # ---------------------------------------- 9. scale bar (bottom-left) + north arrow (TOP-LEFT)
   gmt basemap -LjBL+w100k+o0.7c/0.7c+f+l"km"+u --FONT_LABEL=8p,Helvetica,black
   gmt basemap -TdjTL+w0.9c+o0.7c/0.7c+f2+l,,,N --FONT_TITLE=9p
 
-  # ---------------------------------------- 10. orthographic locator inset (smaller, top-right over water)
   gmt inset begin -DjTR+w2.4c+o0.22c/0.22c -F+gwhite@10+p0.6p,gray55+r2p
     gmt coast -Rg -JG30/40/2.4c -Da -Gtan -Slightsteelblue \
               -A8000 -Bg30 -W0.2p,gray40 -N1/0.2p,gray60

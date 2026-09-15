@@ -1,15 +1,4 @@
 #!/usr/bin/env python3
-"""
-fig09_architecture.py -- Figure 9 of the Istanbul soil-amplification manuscript:
-the architecture of the resist/collapse surrogate, from the six physically
-interpretable input features through the tree ensemble and its aggregation to
-the binary resist/collapse decision used to screen the building stock.
-
-Font: apt-get install fonts-urw-base35    (Debian/Ubuntu)
-      brew install --cask font-urw-base35 (macOS)
-
-Usage:  python3 fig09_architecture.py [outdir]
-"""
 import glob
 import os
 import sys
@@ -21,17 +10,12 @@ from matplotlib.font_manager import FontProperties, findfont, fontManager
 from matplotlib.patches import (Ellipse, FancyArrowPatch, FancyBboxPatch,
                                 Rectangle)
 
-# --------------------------------------------------------------------------- #
-# 1. Font: Nimbus Sans, with Helvetica as the only permitted fallback.         #
-# --------------------------------------------------------------------------- #
 URW_DIRS = ("/usr/share/fonts/opentype/urw-base35",
             "/usr/share/fonts/type1/urw-base35",
             "/usr/local/share/fonts/urw-base35",
             "/opt/homebrew/share/fonts", "/Library/Fonts")
 
-
 def ensure_nimbus():
-    """Register Nimbus Sans; raise rather than let DejaVu Sans through."""
     for d in URW_DIRS:
         for f in glob.glob(os.path.join(d, "NimbusSans-*.otf")):
             try:
@@ -42,11 +26,10 @@ def ensure_nimbus():
         raise RuntimeError("Nimbus Sans not found. Install fonts-urw-base35; "
                            "DejaVu Sans is forbidden by the house style.")
 
-
 ensure_nimbus()
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["Nimbus Sans", "Helvetica"],      # never DejaVu
+    "font.sans-serif": ["Nimbus Sans", "Helvetica"],
     "mathtext.fontset": "custom",
     "mathtext.rm": "Nimbus Sans", "mathtext.it": "Nimbus Sans:italic",
     "mathtext.bf": "Nimbus Sans:bold", "mathtext.sf": "Nimbus Sans",
@@ -60,18 +43,15 @@ FONT_RESOLVED = findfont(_fp)
 if "DejaVu" in FONT_RESOLVED:
     raise RuntimeError("resolved to %s: DejaVu Sans is forbidden." % FONT_RESOLVED)
 
-# --------------------------------------------------------------------------- #
-# 2. Sizes: three only, all inside the 8-12 pt band.                           #
-# --------------------------------------------------------------------------- #
-FS_TITLE = 11.0      # level 1: in-figure title                       (bold)
-FS_HEAD = 9.0        # level 2: column headers, block and class labels
-FS_ITEM = 8.0        # level 4: feature descriptors, tree labels, note
+FS_TITLE = 11.0
+FS_HEAD = 9.0
+FS_ITEM = 8.0
 
-BLUE_F, BLUE_E = "#dceaf5", "#4a7fa8"     # input-feature boxes
-GREEN, RED = "#1a7a55", "#b34a44"         # resist / collapse (also leaf colours)
+BLUE_F, BLUE_E = "#dceaf5", "#4a7fa8"
+GREEN, RED = "#1a7a55", "#b34a44"
 NAVY = "#2c3e56"
 PURPLE = "#7a4fa3"
-AMBER_F, AMBER_E = "#fbeed6", "#c8871a"   # aggregation block
+AMBER_F, AMBER_E = "#fbeed6", "#c8871a"
 
 FEATURES = [("$V_{s30}$", "site stiffness"),
             ("$h_{sed}$", "sediment thickness"),
@@ -80,40 +60,29 @@ FEATURES = [("$V_{s30}$", "site stiffness"),
             ("$H$", "building height"),
             ("$S_a(T_0)$", "spectral acceleration")]
 
-# --------------------------------------------------------------------------- #
-# 3. Geometry, in a 0-100 schematic space mapped to the final printed size.    #
-# --------------------------------------------------------------------------- #
 CM = 1 / 2.54
 YMIN, YMAX = 0.0, 100.0
-FIG_W, FIG_H = 17.5 * CM, 8.4 * CM        # journal double-column width
+FIG_W, FIG_H = 17.5 * CM, 8.4 * CM
 
 fig = plt.figure(figsize=(FIG_W, FIG_H))
-ax = fig.add_axes([0, 0, 1, 1])           # schematic uses the whole canvas
+ax = fig.add_axes([0, 0, 1, 1])
 ax.set_xlim(0, 100)
 ax.set_ylim(YMIN, YMAX)
 ax.axis("off")
 fig.canvas.draw()
 renderer = fig.canvas.get_renderer()
 
-# The axes span 0-100 in both directions on a canvas that is not square, so one
-# x-unit and one y-unit differ in length. A patches.Circle would therefore render
-# as a flattened ellipse; ASPECT converts an x-radius into the y-radius that
-# renders round.
 ASPECT = (FIG_W / 100.0) / (FIG_H / (YMAX - YMIN))
 
-
 def node(x, y, r=1.15, **kw):
-    """A visually round tree node on non-equal-aspect axes."""
     return Ellipse((x, y), width=2 * r, height=2 * r * ASPECT, **kw)
 
-
-# Column geometry: x0 and width of each stage, left to right.
-AGG_C, APP_C = 80.45, 94.45   # centres of the prediction and application columns
-FX, FW = 0.8, 23.5          # input-feature boxes
-VX, VW = 25.8, 9.0          # feature vector
-EX, EW = 36.6, 35.0         # tree ensemble
-AX_, AW = 73.2, 14.5        # aggregation
-PX, PW = 89.1, 10.7         # prediction
+AGG_C, APP_C = 80.45, 94.45
+FX, FW = 0.8, 23.5
+VX, VW = 25.8, 9.0
+EX, EW = 36.6, 35.0
+AX_, AW = 73.2, 14.5
+PX, PW = 89.1, 10.7
 
 ax.text(50, 98.0,
         "Architecture of the resist/collapse surrogate:\n"
@@ -130,7 +99,6 @@ for x, lab, col in [(12.5, "Input features", BLUE_E),
     ax.text(x, 79.0, lab, ha="center", va="center", fontsize=FS_HEAD,
             weight="bold", color=col)
 
-# ---- input-feature boxes -------------------------------------------------- #
 feat_texts = []
 ys = [70.0, 59.0, 48.0, 37.0, 26.0, 15.0]
 for y, (sym, desc) in zip(ys, FEATURES):
@@ -146,7 +114,6 @@ for y, (sym, desc) in zip(ys, FEATURES):
                                  arrowstyle="-|>", mutation_scale=6, lw=0.8,
                                  color="#3a4a5e"))
 
-# ---- feature vector ------------------------------------------------------- #
 ax.add_patch(FancyBboxPatch((VX, 10.0), VW, 65.0,
                             boxstyle="round,pad=0,rounding_size=1.3",
                             fc="#e4e7ec", ec=NAVY, lw=1.0))
@@ -157,7 +124,6 @@ ax.add_patch(FancyArrowPatch((VX + VW + 0.25, 42.5), (EX - 0.25, 42.5),
                              arrowstyle="-|>", mutation_scale=8, lw=1.1,
                              color="#3a4a5e"))
 
-# ---- tree ensemble -------------------------------------------------------- #
 ax.add_patch(FancyBboxPatch((EX, 10.0), EW, 65.0,
                             boxstyle="round,pad=0,rounding_size=1.3",
                             fc="#f2f4f6", ec="#b8c0c8", lw=0.9))
@@ -184,7 +150,6 @@ ax.add_patch(FancyArrowPatch((EX + EW + 0.25, 42.5), (AX_ - 0.25, 42.5),
                              arrowstyle="-|>", mutation_scale=8, lw=1.1,
                              color="#3a4a5e"))
 
-# ---- aggregation ---------------------------------------------------------- #
 ax.add_patch(FancyBboxPatch((AX_, 30.0), AW, 25.0,
                             boxstyle="round,pad=0,rounding_size=1.3",
                             fc=AMBER_F, ec=AMBER_E, lw=1.0))
@@ -194,8 +159,6 @@ ax.text(AX_ + AW / 2, 37.5, "majority vote /\nadditive update",
         ha="center", va="center", fontsize=FS_ITEM, color="#6a4a10",
         linespacing=1.45)
 
-# ---- prediction: the two classes sit directly above and below the ---------- #
-#      aggregation block that produces them
 for y, lab, col in [(68.5, "RESIST", GREEN), (16.5, "COLLAPSE", RED)]:
     ax.add_patch(FancyBboxPatch((AX_, y - 6.5), AW, 13.0,
                                 boxstyle="round,pad=0,rounding_size=1.3",
@@ -207,8 +170,6 @@ ax.add_patch(FancyArrowPatch((AGG_C, 55.4), (AGG_C, 61.6), arrowstyle="-|>",
 ax.add_patch(FancyArrowPatch((AGG_C, 29.6), (AGG_C, 23.4), arrowstyle="-|>",
                              mutation_scale=7, lw=1.0, color="#3a4a5e"))
 
-# ---- application ---------------------------------------------------------- #
-# The screening ranks every cell by its score, so it is fed by both classes.
 ax.add_patch(FancyBboxPatch((PX, 10.0), PW, 65.0,
                             boxstyle="round,pad=0,rounding_size=1.3",
                             fc="#ece4f5", ec=PURPLE, lw=1.1))
@@ -226,10 +187,6 @@ ax.text(50, 4.5,
         ha="center", va="center", fontsize=FS_ITEM, style="italic",
         color="#5a646e")
 
-# --------------------------------------------------------------------------- #
-# 4. Rule 1 check: feature symbol and descriptor must not collide, and the     #
-#    ensemble panel must not run into the aggregation block.                   #
-# --------------------------------------------------------------------------- #
 fig.canvas.draw()
 renderer = fig.canvas.get_renderer()
 bad = []
@@ -249,19 +206,15 @@ if bad:
     raise SystemExit("rule 1 violated: %d collision(s)." % len(bad))
 print("rule 1 check: %d feature rows clear, panels clear" % len(feat_texts))
 
-# --------------------------------------------------------------------------- #
-# 5. Export: vector PDF + 600 dpi PNG.                                         #
-# --------------------------------------------------------------------------- #
 outdir = sys.argv[1] if len(sys.argv) > 1 else "figures"
 os.makedirs(outdir, exist_ok=True)
 for ext, kw in (("pdf", {}), ("png", {"dpi": 600})):
-    fig.savefig(os.path.join(outdir, "fig09_architecture." + ext),
+    fig.savefig(os.path.join(outdir, "fig12_architecture." + ext),
                 bbox_inches="tight", pad_inches=0.02, facecolor="white", **kw)
 
-# Flatten the PNG onto white: journals reject figures with an alpha channel.
 try:
     from PIL import Image
-    _p = os.path.join(outdir, "fig09_architecture.png")
+    _p = os.path.join(outdir, "fig12_architecture.png")
     _im = Image.open(_p).convert("RGBA")
     _bg = Image.new("RGB", _im.size, (255, 255, 255))
     _bg.paste(_im, mask=_im.split()[3])
@@ -269,7 +222,7 @@ try:
 except ImportError:
     print("note: Pillow not available; PNG left with an alpha channel")
 
-print("wrote fig09_architecture.pdf / .png in %s" % outdir)
+print("wrote fig12_architecture.pdf / .png in %s" % outdir)
 print("font resolved to: %s" % FONT_RESOLVED)
-print("verify embedding: pdffonts %s/fig09_architecture.pdf | "
+print("verify embedding: pdffonts %s/fig12_architecture.pdf | "
       "grep -i -e nimbus -e dejavu" % outdir)

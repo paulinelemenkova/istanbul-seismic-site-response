@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ============================================================================
+
 import os, sys, json
 import numpy as np
 import pandas as pd
@@ -49,28 +49,20 @@ if "DejaVu" in findfont(_fp):
 
 SEA, LANDBG, COAST, NODATA = "#d8ecf5", "#f2f2f0", "#3a3a3a", "#cfcfcf"
 
-
 def need(p, what):
     if not os.path.exists(p):
         raise SystemExit(f"ERROR: {os.path.basename(p)} missing - {what}.")
     return p
 
-
-CPT_A = os.environ.get("CPT_A", "indigo-orange.cpt")  # also supplied: gold, gem-256, cmy
+CPT_A = os.environ.get("CPT_A", "indigo-orange.cpt")
 REVERSE_A = os.environ.get("REVERSE_A", "1") == "1"
 CMAP_A = load_cpt(need(os.path.join(HERE, CPT_A), "cpt-city palette for panel (a)"),
                   name=CPT_A[:-4])
 if REVERSE_A:
     CMAP_A = CMAP_A.reversed()
-CPT_B = os.environ.get("CPT_B", "aquamarinemermaid.cpt")  # also: girlcat, autumnrose
-REVERSE_B = os.environ.get("REVERSE_B", "0") == "1"   # purple low, gold high
-# CLIP_B takes a sub-range of the ramp. rc/aquamarinemermaid is symmetric: both
-# ends are the same dark purple (102,42,112), so used whole it would give the
-# smallest and largest neighbourhoods identical colours. Only that dark purple
-# is trimmed (0.12-0.82), keeping rose, gold and blue: the ends become
-# (137,68,123) and (75,104,185), distinct in hue. The clipped ramp is still
-# DIVERGING, L* 40-81 with its light centre on gold, so the two ends match in
-# lightness and separate by hue alone - see the note on panel (b) below.
+CPT_B = os.environ.get("CPT_B", "aquamarinemermaid.cpt")
+REVERSE_B = os.environ.get("REVERSE_B", "0") == "1"
+
 CLIP_B = tuple(float(x) for x in os.environ.get("CLIP_B", "0.12,0.82").split(","))
 from matplotlib.colors import LinearSegmentedColormap
 _raw = load_cpt(need(os.path.join(HERE, CPT_B), "cpt-city palette for panel (b)"),
@@ -81,19 +73,17 @@ CMAP_B = (LinearSegmentedColormap.from_list(CPT_B[:-4] + "_clip",
 if REVERSE_B:
     CMAP_B = CMAP_B.reversed()
 
-# ---- data ------------------------------------------------------------------
 dmg = pd.read_csv(need(os.path.join(HERE, "mahalle_inventory_scenario_joined.csv"),
                        "İBB inventory joined to scenario damage"))
 xy = pd.read_csv(need(os.path.join(HERE, "mahalle_with_coords.csv"), "centroids"))
 tab = xy.merge(dmg[["mahalle_uavt", "n_bldg", "heavy", "heavy_ratio",
                     "gecici_barinma"]], on="mahalle_uavt", how="left")
-if "area_km2" not in tab.columns:                       # fall back to the vs30 table
+if "area_km2" not in tab.columns:
     ar = pd.read_csv(need(os.path.join(HERE, "mahalle_vs30.csv"),
                           "neighbourhood areas"))[["mahalle_uavt", "area_km2"]]
     tab = tab.merge(ar, on="mahalle_uavt", how="left")
 tab["shelter_km2"] = tab.gecici_barinma / tab.area_km2
 
-# ---- geometry and spatial join --------------------------------------------
 gj = json.load(open(need(os.path.join(HERE, "mahalle_fixed.geojson"), "polygons")))
 polys = [shape(f["geometry"]) for f in gj["features"]]
 tree = STRtree(polys)
@@ -115,27 +105,18 @@ land = unary_union([shape(sr.shape.__geo_interface__).intersection(box(W, S, E, 
                     if shape(sr.shape.__geo_interface__).intersects(box(W, S, E, N))])
 land_parts = land.geoms if land.geom_type == "MultiPolygon" else [land]
 
-
 def parts(g):
     return g.geoms if g.geom_type == "MultiPolygon" else [g]
 
-
 fig, (ax, axb) = plt.subplots(2, 1, figsize=(8.4, 9.0))
 
-# ===================== panel (a): shelter demand ============================
 ax.set_facecolor(SEA)
 ax.set_xlim(W, E); ax.set_ylim(S, N)
 ax.set_aspect(1 / np.cos(np.deg2rad(0.5 * (S + N))))
 for poly in land_parts:
     ax.add_patch(MplPolygon(np.asarray(poly.exterior.coords), closed=True,
                             fc=LANDBG, ec="none", zorder=1))
-# Shelter density spans four orders of magnitude (p25 = 43, median 409,
-# p95 = 5005, maximum 18,889 per km2), so a linear scale collapses the map into
-# one colour. A logarithmic scale is used, bounded at the 25th and 95th
-# percentiles rather than at the extremes: scaling to the full range left 28%
-# of neighbourhoods inside the ramp's near-black lower quarter and the map read
-# as a dark mass. Values outside the bounds take the end colours, marked by the
-# arrows on the bar.
+
 SLO, SHI = (float(np.nanpercentile(shel, 25)), float(np.nanpercentile(shel, 95)))
 snorm = LogNorm(SLO, SHI)
 shown, cols, blank = [], [], []
@@ -188,13 +169,12 @@ ax.set_title(f"Modelled temporary-shelter demand, \u0130BB $M_\\mathrm{{w}}$ 7.5
              f"{n_mapped} of {len(tab)} mahalle",
              fontsize=9.5, fontweight="bold", loc="left", pad=6)
 
-# ===================== panel (b): ratio against count =======================
 ok = np.isfinite(tab.heavy) & np.isfinite(tab.heavy_ratio) & (tab.n_bldg > 0)
 t = tab[ok]
 sc = axb.scatter(t.heavy, 100 * t.heavy_ratio, c=t.n_bldg, cmap=CMAP_B,
                  norm=LogNorm(t.n_bldg.min(), t.n_bldg.max()),
                  s=16, lw=0.25, edgecolor="#333333", zorder=3)
-# top ten by each measure: the disagreement between the two rankings
+
 c10 = set(t.nlargest(10, "heavy").index)
 r10 = set(t.nlargest(10, "heavy_ratio").index)
 for idx, mk, lab in ((c10 - r10, "s", "top 10 by count only"),
@@ -227,9 +207,6 @@ for a_, tag in ((ax, "(a)"), (axb, "(b)")):
             fontweight="bold", va="top", ha="left", zorder=10,
             bbox=dict(boxstyle="square,pad=0.18", fc="white", ec="0.4", lw=0.5))
 
-# Panel (a) carries a fixed geographic aspect, so matplotlib shrinks its axes
-# and the free scatter of (b) would otherwise be wider. Align (b) to (a) after
-# the first draw.
 fig.canvas.draw()
 pa, pb = ax.get_position(), axb.get_position()
 axb.set_position([pa.x0, pb.y0, pa.width, pb.height])

@@ -1,19 +1,4 @@
 #!/usr/bin/env python3
-"""
-fig13_spectra -- Site-adjusted elastic response spectra by soil class compared
-with the EC8/TBEC-2018 design spectrum (Eq. ec8 in the manuscript).
-
-Two panels share the period axis:
-  (a) pseudo-acceleration spectrum  S_a(T)   [g]
-  (b) elastic displacement spectrum S_d(T) = S_a (T/2pi)^2  [cm]
-
-EC8 Type-1 elastic spectrum (5% damping), per ground type (CEN EN 1998-1,
-Table 3.2), scaled by a representative Istanbul reference acceleration
-a_g = 0.40 g (DD-2 / 475-yr, rock). The rock spectrum (type A) is drawn as the
-bold reference "design spectrum"; types B-E are the site-adjusted spectra.
-Soft sites (D, E) raise and broaden the acceleration plateau and sharply
-increase the long-period displacement demand.
-"""
 import sys
 
 import numpy as np
@@ -23,10 +8,6 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 from matplotlib.patheffects import withStroke
 
-# ----------------------------------------------------------------------
-# House style
-# ----------------------------------------------------------------------
-# Nimbus Sans is mandatory; DejaVu Sans is forbidden by the house style.
 import glob, os
 from matplotlib.font_manager import FontProperties, findfont, fontManager
 for _d in ("/usr/share/fonts/opentype/urw-base35", "/usr/share/fonts/type1/urw-base35",
@@ -39,13 +20,13 @@ for _d in ("/usr/share/fonts/opentype/urw-base35", "/usr/share/fonts/type1/urw-b
 if not ({"Nimbus Sans", "Helvetica"} & {f.name for f in fontManager.ttflist}):
     raise RuntimeError("Nimbus Sans not found; install fonts-urw-base35.")
 
-FS_TAG, FS_LAB, FS_TICK = 11.0, 9.5, 8.5      # three sizes, all within 8-12 pt
-# House rule 2: two line weights only -- the emphasised series and the rest.
+FS_TAG, FS_LAB, FS_TICK = 11.0, 9.5, 8.5
+
 LW_MAIN, LW_SERIES = 2.0, 1.2
 
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["Nimbus Sans", "Helvetica"],      # never DejaVu
+    "font.sans-serif": ["Nimbus Sans", "Helvetica"],
     "font.size": FS_LAB,
     "axes.labelsize": FS_LAB,
     "xtick.labelsize": FS_TICK,
@@ -66,13 +47,9 @@ if "DejaVu" in findfont(_fp):
 
 HALO = [withStroke(linewidth=1.8, foreground="white")]
 
-G = 9.80665  # m s^-2
+G = 9.80665
 
-# ----------------------------------------------------------------------
-# EC8 Type-1 elastic spectrum, Eq. (ec8)
-# ----------------------------------------------------------------------
 def Sa_ec8(T, ag, S, TB, TC, TD):
-    """Elastic pseudo-acceleration spectrum (same units as ag)."""
     T = np.asarray(T, float)
     out = np.empty_like(T)
     b1 = T < TB
@@ -85,7 +62,6 @@ def Sa_ec8(T, ag, S, TB, TC, TD):
     out[b4] = ag * S * 2.5 * (TC * TD / T[b4] ** 2)
     return out
 
-# ground type: (S, TB, TC, TD)
 CLASSES = {
     "A": (1.00, 0.15, 0.40, 2.00),
     "B": (1.20, 0.15, 0.50, 2.00),
@@ -95,12 +71,8 @@ CLASSES = {
 }
 DESC = {"A": "rock", "B": "stiff", "C": "medium",
         "D": "soft", "E": "soft over rock"}
-ag = 0.40  # g, representative Istanbul reference acceleration (rock)
+ag = 0.40
 
-# ColorBrewer Set1 (qualitative, 9-class) for the four site-adjusted classes.
-# Set1 maximises contrast but its red and green are confusable under deuteranopia,
-# so every series also carries its own dash pattern and marker; the figure is
-# therefore readable in greyscale and without colour discrimination.
 SET1 = {"red": "#e41a1c", "blue": "#377eb8", "green": "#4daf4a",
         "purple": "#984ea3", "orange": "#ff7f00", "brown": "#a65628"}
 COL = {"B": SET1["blue"], "C": SET1["green"], "D": SET1["orange"], "E": SET1["red"]}
@@ -110,13 +82,9 @@ LS = {"B": (0, (1, 1.4)), "C": (0, (5, 1.6)), "D": (0, (6, 1.6, 1.4, 1.6)),
 
 T = np.linspace(1e-3, 4.0, 1400)
 
-# ----------------------------------------------------------------------
-# Figure
-# ----------------------------------------------------------------------
 CM = 1 / 2.54
 fig, (axA, axD) = plt.subplots(1, 2, figsize=(17.5 * CM, 8.0 * CM))
-# Panels pulled together: the only thing that has to fit between them is the
-# right panel's y-label, so wspace is cut from 0.235 to 0.155.
+
 fig.subplots_adjust(left=0.070, right=0.988, bottom=0.135, top=0.975, wspace=0.155)
 
 def style(ax, xmaj, xmin, ymaj, ymin):
@@ -137,9 +105,8 @@ def mark_dot(ax, T, y, cls):
     ax.plot(T[idx], y[idx], MRK[cls], ms=3.4, mfc=COL[cls], mec="white",
             mew=0.5, ls="none", zorder=5)
 
-# ---- (a) pseudo-acceleration -----------------------------------------
 SaA = Sa_ec8(T, ag, *CLASSES["A"])
-for cls in ("E", "D", "C", "B"):                      # soft drawn first
+for cls in ("E", "D", "C", "B"):
     y = Sa_ec8(T, ag, *CLASSES[cls])
     axA.plot(T, y, color=COL[cls], lw=LW_SERIES, ls=LS[cls], zorder=4,
              label=f"Type {cls} ({DESC[cls]})")
@@ -151,8 +118,6 @@ axA.set_ylim(0, 1.98)
 axA.set_xlabel("Period $T$ (s)")
 axA.set_ylabel("Pseudo-acceleration $S_a$ ($g$)")
 
-# structural periods of interest: thin guides + short horizontal labels pinned
-# to the bottom (blank band below the lowest curve), never crossing the data
 sp = [(0.15, "low-rise"),
       (0.70, "mid-rise"),
       (2.00, "isolated")]
@@ -160,10 +125,7 @@ for (Tp, lab), ytxt in zip(sp, (0.04, 0.155, 0.04)):
     axA.axvline(Tp, color="0.45", lw=0.7, ls=":", zorder=2)
     axA.text(Tp + 0.04, ytxt, lab, fontsize=FS_TICK, va="bottom", ha="left",
              color="0.30", path_effects=HALO, zorder=7)
-# Rule 3: text and leader arrow are ONE annotate call, so the arrow is bound to
-# its own caption -- head on the long-period branch where an isolated structure
-# sits, tail at the text, which stands in the blank wedge above the tails and
-# below the legend.
+
 axA.annotate("seismic\nisolation",
              xy=(2.05, Sa_ec8(np.array([2.05]), ag, *CLASSES["E"])[0]),
              xytext=(2.72, 0.72), fontsize=FS_TICK,
@@ -181,9 +143,8 @@ legA = axA.legend(loc="upper right", framealpha=0.93, edgecolor="0.6",
                   bbox_to_anchor=(0.995, 0.995))
 legA.get_frame().set_linewidth(0.5)
 
-# ---- (b) displacement spectrum ---------------------------------------
 def Sd_cm(T, *p):
-    return Sa_ec8(T, *p) * G * (T / (2 * np.pi)) ** 2 * 100.0  # ag in g -> m/s^2
+    return Sa_ec8(T, *p) * G * (T / (2 * np.pi)) ** 2 * 100.0
 
 SdA = Sd_cm(T, ag, *CLASSES["A"])
 for cls in ("E", "D", "C", "B"):
@@ -199,18 +160,14 @@ axD.set_ylabel("Spectral displacement $S_d$ (cm)")
 axD.text(0.018, 0.96, "(b)", transform=axD.transAxes, fontsize=FS_TAG,
          fontweight="bold", va="top", ha="left",
          bbox=dict(boxstyle="square,pad=0.18", fc="white", ec="0.4", lw=0.5))
-# annotate growing long-period displacement demand at soft sites; text kept in the
-# blank wedge below the lowest curve (rock plateau ~20 cm), arrow as leader to Type D
+
 axD.annotate("soft sites: large\nlong-period\ndisplacement demand",
              xy=(2.10, Sd_cm(np.array([2.10]), ag, *CLASSES["D"])[0]),
              xytext=(1.05, 79.0), fontsize=FS_TICK, ha="left", va="top", color="0.25",
              path_effects=HALO,
              arrowprops=dict(arrowstyle="->", color="0.4", lw=0.8,
                              connectionstyle="arc3,rad=0.25"))
-# Panel (b) carries no legend of its own: it shows the same five series in the
-# same colours and dash patterns as panel (a), and a second legend would both
-# duplicate that key and cover the curves. The series are instead labelled
-# directly at the right-hand edge, which the reader can follow without a key.
+
 LABEL_AT = {"D": (3.30, 6), "E": (3.30, 7), "C": (2.60, -13), "B": (3.30, -13),
             "A": (3.30, -13)}
 for cls in ("D", "E", "C", "B", "A"):
@@ -239,15 +196,10 @@ print("plateau Sa: A=%.2f E=%.2f g" % (2.5 * ag * CLASSES["A"][0],
                                         2.5 * ag * CLASSES["E"][0]))
 print("Sd@2s: A=%.1f D=%.1f cm" % (SdA[np.argmin(abs(T - 2))],
                                    Sd_cm(np.array([2.0]), ag, *CLASSES["D"])[0]))
-# --------------------------------------------------------------------------- #
-# House checks: rule 1/10 (no text or legend on data) and rule 3 (every leader   #
-# arrow joins its text to the object it names).                                  #
-# --------------------------------------------------------------------------- #
+
 from matplotlib.text import Annotation, Text
 
 def _text_bbox(a, r):
-    """Text-only bbox: for an Annotation this EXCLUDES the leader arrow,
-    which is allowed (indeed meant) to cross the data."""
     return Text.get_window_extent(a, renderer=r)
 
 fig.canvas.draw()
@@ -266,7 +218,7 @@ for _ax, _name in ((axA, "(a)"), (axD, "(b)")):
     _P = _data_px(_ax)
     _lg = _ax.get_legend()
     _boxes = ([("legend", _lg.get_frame().get_window_extent(_rend))] if _lg else [])
-    for _c in _ax.texts:                       # text box only; arrows may cross data
+    for _c in _ax.texts:
         if _c.get_text().strip():
             _boxes.append((repr(_c.get_text())[:26], _text_bbox(_c, _rend)))
     for _lbl, _bb in _boxes:
@@ -275,12 +227,12 @@ for _ax, _name in ((axA, "(a)"), (axD, "(b)")):
         if _hit:
             print("  OVERLAP in %s: %-28s %d data points" % (_name, _lbl, _hit))
             _bad += 1
-    for _i in range(len(_boxes)):               # text must not sit on text either
+    for _i in range(len(_boxes)):
         for _j in range(_i + 1, len(_boxes)):
             if _boxes[_i][1].overlaps(_boxes[_j][1]):
                 print("  TEXT-TEXT in %s: %s / %s" % (_name, _boxes[_i][0], _boxes[_j][0]))
                 _bad += 1
-    for _a in _ax.texts:                        # rule 3: arrows must connect
+    for _a in _ax.texts:
         if isinstance(_a, Annotation) and getattr(_a, "arrow_patch", None) is not None:
             _head = _ax.transData.transform(np.asarray(_a.xy, float))
             _tail = _a.get_transform().transform(np.asarray(_a.get_position(), float))

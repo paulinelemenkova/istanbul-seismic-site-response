@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-fig02_framework -- Research-framework schematic.
-Lemenkova & Zulfikar, Sea of Marmara seismic-response study.
 
-Font: apt-get install fonts-urw-base35 / brew install --cask font-urw-base35
-Usage: python3 fig02_framework.py [outdir]
-"""
 import glob
 import os
 import sys
@@ -17,9 +10,6 @@ import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties, findfont, fontManager
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
-# --------------------------------------------------------------------------- #
-# Font                                                                         #
-# --------------------------------------------------------------------------- #
 URW = ("/usr/share/fonts/opentype/urw-base35", "/usr/share/fonts/type1/urw-base35",
        "/usr/local/share/fonts/urw-base35", "/opt/homebrew/share/fonts",
        "/Library/Fonts")
@@ -34,7 +24,7 @@ if not ({"Nimbus Sans", "Helvetica"} & {f.name for f in fontManager.ttflist}):
                        "DejaVu Sans is forbidden by the house style.")
 plt.rcParams.update({
     "font.family": "sans-serif",
-    "font.sans-serif": ["Nimbus Sans", "Helvetica"],      # never DejaVu
+    "font.sans-serif": ["Nimbus Sans", "Helvetica"],
     "mathtext.fontset": "custom",
     "mathtext.rm": "Nimbus Sans", "mathtext.it": "Nimbus Sans:italic",
     "mathtext.bf": "Nimbus Sans:bold", "mathtext.sf": "Nimbus Sans",
@@ -46,9 +36,6 @@ RESOLVED = findfont(_fp)
 if "DejaVu" in RESOLVED:
     raise RuntimeError("resolved to %s: DejaVu Sans is forbidden." % RESOLVED)
 
-# --------------------------------------------------------------------------- #
-# Sizes and colours                                                            #
-# --------------------------------------------------------------------------- #
 FS_TITLE, FS_HEAD, FS_ITEM = 11.0, 9.0, 8.0
 
 C = {"lim_dark": "#B4504A", "lim_tint": "#F3DFDC", "lim_panel": "#FBF1F0",
@@ -59,7 +46,7 @@ C = {"lim_dark": "#B4504A", "lim_tint": "#F3DFDC", "lim_panel": "#FBF1F0",
      "ink": "#222222", "arrow": "#4A4A4A", "panel_edge": "#D8D8D8"}
 
 CM = 1 / 2.54
-FIG_W_IN, FIG_H_IN = 17.5 * CM, 11.2 * CM     # journal double-column width
+FIG_W_IN, FIG_H_IN = 17.5 * CM, 11.2 * CM
 XMAX = 132.0
 YMAX = XMAX * FIG_H_IN / FIG_W_IN
 
@@ -70,8 +57,7 @@ ax.set_aspect("equal"); ax.axis("off")
 fig.canvas.draw()
 REND = fig.canvas.get_renderer()
 
-CHECKS = []          # (Text, x_left, x_right) verified after rendering
-
+CHECKS = []
 
 def box(x0, y0, x1, y1, *, fc, ec, lw=1.0, rounding=1.3, z=2):
     ax.add_patch(FancyBboxPatch((x0, y0), x1 - x0, y1 - y0,
@@ -79,31 +65,26 @@ def box(x0, y0, x1, y1, *, fc, ec, lw=1.0, rounding=1.3, z=2):
                  linewidth=lw, edgecolor=ec, facecolor=fc, zorder=z,
                  mutation_aspect=1.0))
 
-
 def label(x, y, s, *, color=C["ink"], size=FS_ITEM, weight="normal",
           z=5, style="normal"):
     return ax.text(x, y, s, color=color, fontsize=size, fontweight=weight,
                    ha="center", va="center", zorder=z, fontstyle=style,
                    linespacing=1.30)
 
-
 def header(x0, x1, yc, s, *, fc):
     box(x0, yc - 3.4, x1, yc + 3.4, fc=fc, ec=fc, lw=0, rounding=1.3, z=3)
     t = label((x0 + x1) / 2, yc, s, color="white", size=FS_HEAD, weight="bold", z=6)
-    CHECKS.append((t, x0, x1))          # headers are checked too
-
+    CHECKS.append((t, x0, x1))
 
 def item(x0, x1, yc, s, *, tint, edge, h=5.9):
     box(x0, yc - h, x1, yc + h, fc=tint, ec=edge, lw=0.9, rounding=1.1, z=2)
     t = label((x0 + x1) / 2, yc, s, size=FS_ITEM)
     CHECKS.append((t, x0, x1))
 
-
 def big_arrow(x0, x1, yc):
     ax.add_patch(FancyArrowPatch((x0, yc), (x1, yc),
                  arrowstyle="simple,head_length=3.2,head_width=5.0,tail_width=2.0",
                  color=C["arrow"], lw=0, zorder=6, mutation_scale=1.0))
-
 
 def thin_arrow(x0, y0, x1, y1, color=C["arrow"], lw=1.1, rad=0.0):
     ax.add_patch(FancyArrowPatch((x0, y0), (x1, y1), arrowstyle="-|>",
@@ -111,12 +92,6 @@ def thin_arrow(x0, y0, x1, y1, color=C["arrow"], lw=1.1, rad=0.0):
                  connectionstyle="arc3,rad=%s" % rad, zorder=4,
                  shrinkA=0, shrinkB=0))
 
-
-# --------------------------------------------------------------------------- #
-# Layout                                                                       #
-# --------------------------------------------------------------------------- #
-# Panel spans chosen so that the inter-stage gaps are ~10 units wide,
-# which is what the connector labels need to sit clear of the panels.
 C1, C2, C3 = (1.9, 30.9), (45.0, 87.0), (101.1, 130.1)
 HDR_Y = YMAX - 12.0
 PANEL_TOP, PANEL_BOT = YMAX - 6.5, 2.5
@@ -130,7 +105,6 @@ label(XMAX / 2, YMAX - 3.0,
       "machine learning for seismic-risk screening of Istanbul",
       size=FS_TITLE, weight="bold", color=C["slate"])
 
-# ---- stage 1 ----
 header(*C1, HDR_Y, "1  \u00b7  Current limitations", fc=C["lim_dark"])
 label((C1[0] + C1[1]) / 2, HDR_Y - 7.0, "The research gap",
       size=FS_ITEM, weight="bold", color=C["lim_dark"], style="italic")
@@ -143,7 +117,6 @@ for s in lim_items:
     item(C1[0] + 1.5, C1[1] - 1.5, y, s, tint=C["lim_tint"], edge=C["lim_dark"])
     y -= 13.6
 
-# ---- stage 2 ----
 header(*C2, HDR_Y, "2  \u00b7  Proposed GMT + ML framework", fc=C["slate"])
 xL0, xL1, xR0, xR1 = 46.0, 65.4, 66.6, 86.0
 label((xL0 + xL1) / 2, HDR_Y - 7.4, "GMT geophysical\nmapping",
@@ -177,7 +150,6 @@ thin_arrow((xL0 + xL1) / 2, last_y - 0.3, (xL0 + xL1) / 2 + 4.0, int_y1 + 0.2,
 thin_arrow((xR0 + xR1) / 2, last_y - 0.3, (xR0 + xR1) / 2 - 4.0, int_y1 + 0.2,
            color=C["ml_dark"], lw=1.2, rad=0.18)
 
-# ---- stage 3 ----
 header(*C3, HDR_Y, "3  \u00b7  Contributions", fc=C["amb_dark"])
 con_items = ["(i) Reproducible GMT\nmapping of seismicity\nand physiography\nframing the demand",
              "(ii) Workflow that\nseparates resistance\nfrom collapse and\npredicts shaking",
@@ -193,25 +165,19 @@ _t3 = label((C3[0] + C3[1]) / 2, (int_y0 + int_y1) / 2,
             color="white", size=FS_ITEM, weight="bold", z=6)
 CHECKS.append((_t3, C3[0] + 1.5, C3[1] - 1.5))
 
-# ---- inter-stage arrows ----
-# The inter-stage arrow and its caption are derived from the gap between the
-# panel outlines, not hardcoded, so both stay centred if the panels move.
-PANEL_PAD = 1.4                       # panels are drawn at C +/- PANEL_PAD
+PANEL_PAD = 1.4
 GAPS = [((C1[1] + PANEL_PAD), (C2[0] - PANEL_PAD), "addressed\nby"),
         ((C2[1] + PANEL_PAD), (C3[0] - PANEL_PAD), "delivers")]
 mid = (int_y1 + HDR_Y - 16.5) / 2
 
 for gx0, gx1, caption in GAPS:
-    xc = (gx0 + gx1) / 2.0            # centre of the empty space
-    half = (gx1 - gx0) * 0.32         # arrow spans ~64 % of the gap
+    xc = (gx0 + gx1) / 2.0
+    half = (gx1 - gx0) * 0.32
     big_arrow(xc - half, xc + half, mid)
     t = label(xc, mid + 7.4, caption, size=FS_ITEM, style="italic",
               color=C["arrow"])
-    CHECKS.append((t, gx0, gx1))      # the caption must fit the gap too
+    CHECKS.append((t, gx0, gx1))
 
-# --------------------------------------------------------------------------- #
-# Rule 1 check: every item label must sit inside its box                       #
-# --------------------------------------------------------------------------- #
 fig.canvas.draw()
 REND = fig.canvas.get_renderer()
 bad = []
@@ -228,9 +194,6 @@ if bad:
                      % len(bad))
 print("rule 1 check: all %d item labels inside their boxes" % len(CHECKS))
 
-# --------------------------------------------------------------------------- #
-# Export                                                                       #
-# --------------------------------------------------------------------------- #
 outdir = sys.argv[1] if len(sys.argv) > 1 else "."
 os.makedirs(outdir, exist_ok=True)
 stem = os.path.join(outdir, "fig02_framework")
