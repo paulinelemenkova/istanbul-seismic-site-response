@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""
-Listing (shap): SHAP feature attribution of the fitted classifier.
-
-Extracted verbatim from the source-code listing (lst:shap) of the
-manuscript "Soil amplification and collapse screening in Istanbul".
-This is the code as documented in the paper; the structural/site
-listings (siteresp, mdof, modal) are the representative reference
-implementations described there. Verify paths and parameters against
-your local environment before running.
-
-Description (from the listing caption):
-SHAP-based feature attribution applied to the fitted resist/collapse classifier, yielding the global ranking of site and structural predictors reported in Section (see manuscript).
-"""
-
 import shap
 import numpy as np
 
