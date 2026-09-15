@@ -4,18 +4,6 @@
 fig02_framework -- Research-framework schematic.
 Lemenkova & Zulfikar, Sea of Marmara seismic-response study.
 
-Rebuilt to the house style of the scientific-plotting skill:
-  * Nimbus Sans, never DejaVu Sans; the script raises if the font is missing.
-  * Drawn at the final printed width (17.5 cm). The previous version was drawn
-    13.2 in wide and placed at 0.95\\textwidth, so every label was reduced by a
-    factor of about two on the page and the item text rendered at 3-5 pt, far
-    below the 8 pt floor. Sizes here are the sizes the reader sees.
-  * Three text sizes only, inside the mandatory 8-12 pt band: 11 pt bold for
-    the title, 9 pt bold for stage headers, 8 pt for item text.
-  * Every item label is measured after rendering and asserted to fit inside its
-    box, so the wrap cannot silently overflow.
-  * Exports vector PDF plus 600 dpi PNG, flattened to RGB.
-
 Font: apt-get install fonts-urw-base35 / brew install --cask font-urw-base35
 Usage: python3 fig02_framework.py [outdir]
 """
