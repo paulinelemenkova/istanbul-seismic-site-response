@@ -1,41 +1,4 @@
 #!/usr/bin/env python3
-"""
-run_validation.py -- compute the numbers still missing from the revised
-manuscript and print them as ready-to-paste LaTeX table rows.
-
-It fills exactly the fifteen [VALUE] cells left in article_06082026.tex:
-
-  * Table 9  (tab:ablation)  -- the leakage-controlled row: the model refitted
-    without the two deterministically derived intermediates, F (amplification
-    factor) and Sa(T0), which are the quantities through which the labelling
-    rule of Eq. (14) is evaluated.
-  * Table 10 (tab:spatialcv) -- 5 x 5 km spatial block cross-validation and
-    leave-one-district-out testing, for both Random Forest and XGBoost.
-
-Input
------
-A CSV of the 2800 labelled analysis cells with these columns:
-
-    vs30            time-averaged shear-wave velocity, m/s
-    sed_thickness   depth to engineering bedrock, m
-    dist_fault      shortest distance to the Main Marmara Fault, km
-    T0              fundamental period, s
-    bldg_height     structural height, m
-    Sa              spectral acceleration at T0, g      <- derived intermediate
-    amp_factor      site amplification factor F         <- derived intermediate
-    x, y            projected cell-centre coordinates, metres (e.g. UTM 35N)
-    district        district name, for leave-one-district-out
-    label           0 = resist, 1 = collapse
-
-Usage
------
-    python3 run_validation.py site_structure_features.csv
-    python3 run_validation.py site_structure_features.csv --block-km 5 --seed 42
-
-Requires: numpy, pandas, scikit-learn. xgboost is optional -- without it the
-script falls back to sklearn's HistGradientBoostingClassifier and says so, so
-that the manuscript can name what was actually run.
-"""
 import argparse
 import sys
 
