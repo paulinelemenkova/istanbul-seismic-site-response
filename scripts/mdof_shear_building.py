@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-"""
-Listing (mdof): MDOF shear-building model and dynamic descriptors.
-
-Extracted verbatim from the source-code listing (lst:mdof) of the
-manuscript "Soil amplification and collapse screening in Istanbul".
-This is the code as documented in the paper; the structural/site
-listings (siteresp, mdof, modal) are the representative reference
-implementations described there. Verify paths and parameters against
-your local environment before running.
-
-Description (from the listing caption):
-Assembly of the representative multi-degree-of-freedom shear-building model and extraction of its dynamic descriptors (building height, modal periods, and effective modal-mass fractions) used as structural features.
-"""
 
 import numpy as np
 from scipy.linalg import eigh
