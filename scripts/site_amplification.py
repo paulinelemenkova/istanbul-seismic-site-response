@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-"""
-Listing (siteresp): 1-D linear site-amplification transfer function.
-
-Extracted verbatim from the source-code listing (lst:siteresp) of the
-manuscript "Soil amplification and collapse screening in Istanbul".
-This is the code as documented in the paper; the structural/site
-listings (siteresp, mdof, modal) are the representative reference
-implementations described there. Verify paths and parameters against
-your local environment before running.
-
-Description (from the listing caption):
-One-dimensional equivalent-linear site amplification: the transfer function of a damped soil layer over elastic bedrock, used to derive the amplification factors and site periods of the Istanbul profiles.
-"""
-
 import numpy as np
 
 def site_amplification(Vs, H, xi=0.05, rho_s=1900.0,
