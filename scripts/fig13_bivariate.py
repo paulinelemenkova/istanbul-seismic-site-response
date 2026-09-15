@@ -240,8 +240,8 @@ axb.set_title(f"Modelled buried-pipe damage: gas {_g}, water {_w}, wastewater {_
               f"({_g+_w+_s} breaks in total)",
               fontsize=9.5, fontweight="bold", loc="left", pad=6)
 
-fig.savefig(os.path.join(HERE, "fig17_bivariate.pdf"), bbox_inches="tight", pad_inches=0.02)
-fig.savefig(os.path.join(HERE, "fig17_bivariate.png"), dpi=600,
+fig.savefig(os.path.join(HERE, "fig13_bivariate.pdf"), bbox_inches="tight", pad_inches=0.02)
+fig.savefig(os.path.join(HERE, "fig13_bivariate.png"), dpi=600,
             bbox_inches="tight", pad_inches=0.02)
 
 print(f"mapped {n_mapped}/{len(tab)} mahalle | scheme {SCHEME}")

@@ -162,8 +162,8 @@ for xk, mk in zip((0.18, 0.5, 0.82), (MMIN + 0.2 * (MMAX - MMIN), MMIN + 0.55 * 
 kax.text(0.5, 0.96, "symbol area scales with $M$", ha="center", va="top", fontsize=9)
 
 for ext in ("pdf", "png"):
-    fig.savefig(f"fig14_crosssection.{ext}", dpi=300, bbox_inches="tight", pad_inches=0.02)
+    fig.savefig(f"fig11_crosssection.{ext}", dpi=300, bbox_inches="tight", pad_inches=0.02)
 print(f"strike azimuth (data-derived) = {strike_az:.0f} deg;  ref = {lon0:.3f}E {lat0:.3f}N")
 print(f"N={N}  depth {depth.min():.1f}-{depth.max():.1f} km  mean {mean_depth:.2f} +/- {depth.std(ddof=1):.2f}  "
       f"5-15 km {frac_core*100:.1f}%  <=20 km {100*np.mean(depth<=20):.1f}%  >20 km off-band {100*np.mean(depth>20):.1f}%")
-print("saved fig14_crosssection.pdf / .png")
+print("saved fig11_crosssection.pdf / .png")

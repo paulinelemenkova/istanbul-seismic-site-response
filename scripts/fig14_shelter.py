@@ -213,8 +213,8 @@ axb.set_position([pa.x0, pb.y0, pa.width, pb.height])
 cba_pos, cbb_pos = cba.ax.get_position(), cbb.ax.get_position()
 cbb.ax.set_position([cba_pos.x0, cbb_pos.y0, cba_pos.width, cbb_pos.height])
 
-fig.savefig(os.path.join(HERE, "fig18_shelter.pdf"), bbox_inches="tight", pad_inches=0.02)
-fig.savefig(os.path.join(HERE, "fig18_shelter.png"), dpi=600,
+fig.savefig(os.path.join(HERE, "fig14_shelter.pdf"), bbox_inches="tight", pad_inches=0.02)
+fig.savefig(os.path.join(HERE, "fig14_shelter.png"), dpi=600,
             bbox_inches="tight", pad_inches=0.02)
 v = shel[np.isfinite(shel)]
 print(f"mapped {n_mapped}/{len(tab)} mahalle | shelter/km2 {v.min():.0f}-{v.max():.0f} "

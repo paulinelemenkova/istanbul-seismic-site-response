@@ -181,7 +181,7 @@ for cls in ("D", "E", "C", "B", "A"):
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "."
 os.makedirs(OUT, exist_ok=True)
-_stem = os.path.join(OUT, "fig13_spectra")
+_stem = os.path.join(OUT, "fig10_spectra")
 fig.savefig(_stem + ".pdf", bbox_inches="tight", pad_inches=0.02)
 fig.savefig(_stem + ".png", dpi=600, bbox_inches="tight", pad_inches=0.02)
 try:
