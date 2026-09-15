@@ -4,23 +4,6 @@ fig08_workflow.py -- Figure 8 of the Istanbul soil-amplification manuscript:
 the methodology workflow, from raw data through GMT dataset construction and
 feature engineering to a trained resist/collapse surrogate and screening maps.
 
-House style (scientific-plotting skill):
-  * Nimbus Sans everywhere; DejaVu Sans is forbidden, and the script raises if
-    matplotlib would fall back to it.
-  * Built at the final double-column width (17.5 cm), not drawn large and shrunk.
-  * Exactly three text sizes, all inside the mandatory 8-12 pt band:
-    11 pt bold (in-figure title), 9 pt bold (stage headers), 8 pt (stage items).
-  * Rule 1 (nothing readable may overlap anything else) is *verified, not
-    assumed*: every item label is measured in display space after rendering and
-    asserted to sit inside its own stage box.
-  * Two line weights only (rule 2): the primary stage-to-stage flow is the
-    emphasised path at 2.0 pt, the feedback loop is an ordinary 1.2 pt, and
-    structural ink (box outlines) sits at 0.8 pt so it cannot be mistaken for
-    the flow.
-  * The loop caption is a direct label placed against the arc it names, not a
-    detached string (rule 3).
-  * Exported as vector PDF plus 600 dpi PNG, named figNN_*.
-
 Colour: qual-mixed-12 (Statistik Stadt Zurich / Interactive Things, 2015;
 cpt-city ssz/qual-mixed-12.cpt, CC BY-SA 4.0). A genuinely *qualitative* scale
 of twelve colours built as six light/dark pairs -- blue, pink, red, yellow,
